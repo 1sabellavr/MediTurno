@@ -32,4 +32,11 @@
     <string name="error_confirmar_vacio">Confirma tu contraseña</string>
     <string name="error_contrasenas_no_coinciden">Las contraseñas no coinciden</string>
     <string name="registro_exitoso">Registro enviado. Ya puedes iniciar sesión</string>
+
+    <!-- Pantalla principal -->
+    <string name="nav_usuarios">Usuarios</string>
+    <string name="nav_inventario">Inventario</string>
+    <string name="nav_citas">Citas</string>
+    <string name="menu_cerrar_sesion">Cerrar sesión</string>
+    <string name="placeholder_texto">Esta pantalla se construye en los siguientes pasos</string>
 </resources>
