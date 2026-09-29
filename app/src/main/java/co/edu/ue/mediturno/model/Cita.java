@@ -1,14 +1,10 @@
-package co.edu.ue.mediturno.models;
-
+package co.edu.ue.mediturno.model;
 
 /**
  * CLASE MODELO: Cita
- * Representa un turno o cita de entrega de medicamentos registrada por un paciente (CRUD Citas).
- * Facilita el intercambio de datos entre la App Android, SQLite/SharedPreferences y el Backend PostgreSQL.
+ * Representa un turno o cita de entrega de medicamentos registrada por un paciente.
  */
 public class Cita {
-    // 2. ATRIBUTOS (VARIABLES DE INSTANCIA)
-    // Datos clave que conforman un tiquete de atención en MedTurn.
     private int id;
     private int idUsuario;
     private String medicamento;
@@ -17,8 +13,6 @@ public class Cita {
     private String puntoAtencion;
     private String estado; // "PENDIENTE", "ATENDIDO", "CANCELADO"
 
-    // Método encargado de inicializar el objeto Cita cuando se crea un nuevo turno
-    // o cuando se recibe el listado de citas
     public Cita(int id, int idUsuario, String medicamento, String fecha, String hora, String puntoAtencion, String estado) {
         this.id = id;
         this.idUsuario = idUsuario;
@@ -29,40 +23,59 @@ public class Cita {
         this.estado = estado;
     }
 
-    // Métodos públicos que permiten extraer la información de la cita para pintar los componentes gráficos.
-
-    // Obtiene el ID numérico de la cita
     public int getId() {
         return id;
     }
 
-    // Obtiene el ID del usuario dueño de la cita
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public int getIdUsuario() {
         return idUsuario;
     }
 
-    // Obtiene el nombre del medicamento a reclamar
+    public void setIdUsuario(int idUsuario) {
+        this.idUsuario = idUsuario;
+    }
+
     public String getMedicamento() {
         return medicamento;
     }
 
-    // Obtiene la fecha agendada
+    public void setMedicamento(String medicamento) {
+        this.medicamento = medicamento;
+    }
+
     public String getFecha() {
         return fecha;
     }
 
-    // Obtiene la hora agendada (Útil para programar alarmas/notificaciones locales)
+    public void setFecha(String fecha) {
+        this.fecha = fecha;
+    }
+
     public String getHora() {
         return hora;
     }
 
-    // Obtiene la sede o punto de atención físico
+    public void setHora(String hora) {
+        this.hora = hora;
+    }
+
     public String getPuntoAtencion() {
         return puntoAtencion;
     }
 
-    // Obtiene el estado actual de la cita ("PENDIENTE", "ATENDIDO", etc.)
+    public void setPuntoAtencion(String puntoAtencion) {
+        this.puntoAtencion = puntoAtencion;
+    }
+
     public String getEstado() {
         return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
     }
 }

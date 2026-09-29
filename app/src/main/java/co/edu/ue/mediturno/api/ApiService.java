@@ -1,14 +1,14 @@
 package co.edu.ue.mediturno.api;//define cuáles caminos o URLs de la API vas a consumir
 
-// importamos los modelos que creamos en la carpeta models
-import co.edu.ue.mediturno.models.Cita;
-import co.edu.ue.mediturno.models.Medicamento;
-import co.edu.ue.mediturno.models.Usuario;
+// importamos los modelos que creamos en la carpeta model
+import co.edu.ue.mediturno.model.Cita;
+import co.edu.ue.mediturno.model.Medicamento;
+import co.edu.ue.mediturno.model.PuntoAtencion;
+import co.edu.ue.mediturno.model.Usuario;
 
 // librerias de retrofit y listas para peticiones
 import java.util.List;
 
-import co.edu.ue.mediturno.models.puntoAtencion;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
@@ -35,5 +35,5 @@ public interface ApiService {
 
     // trae punto de atencion
     @GET("api/puntos-atencion")
-    Call<List<puntoAtencion>> obtenerPuntosAtencion();
+    Call<List<PuntoAtencion>> obtenerPuntosAtencion();
 }

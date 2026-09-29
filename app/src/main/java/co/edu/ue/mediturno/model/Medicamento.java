@@ -7,6 +7,12 @@ public class Medicamento {
     private String descripcion;
     private int cantidad;
     private String fechaVencimiento;
+    private String laboratorio;
+    private int stock;
+    private String epsRequerida;
+
+    public Medicamento() {
+    }
 
     public Medicamento(int id, String nombre, String descripcion, int cantidad,
                        String fechaVencimiento) {
@@ -15,6 +21,16 @@ public class Medicamento {
         this.descripcion = descripcion;
         this.cantidad = cantidad;
         this.fechaVencimiento = fechaVencimiento;
+        this.stock = cantidad;
+    }
+
+    public Medicamento(int id, String nombre, String laboratorio, String epsRequerida, int stock) {
+        this.id = id;
+        this.nombre = nombre;
+        this.laboratorio = laboratorio;
+        this.epsRequerida = epsRequerida;
+        this.stock = stock;
+        this.cantidad = stock;
     }
 
     public int getId() {
@@ -55,5 +71,30 @@ public class Medicamento {
 
     public void setFechaVencimiento(String fechaVencimiento) {
         this.fechaVencimiento = fechaVencimiento;
+    }
+
+    public String getLaboratorio() {
+        return laboratorio;
+    }
+
+    public void setLaboratorio(String laboratorio) {
+        this.laboratorio = laboratorio;
+    }
+
+    public int getStock() {
+        return stock;
+    }
+
+    public void setStock(int stock) {
+        this.stock = stock;
+        this.cantidad = stock;
+    }
+
+    public String getEpsRequerida() {
+        return epsRequerida;
+    }
+
+    public void setEpsRequerida(String epsRequerida) {
+        this.epsRequerida = epsRequerida;
     }
 }

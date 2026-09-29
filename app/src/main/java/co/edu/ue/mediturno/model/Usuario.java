@@ -7,7 +7,11 @@ public class Usuario {
     private String documento;
     private String telefono;
     private String correo;
+    private String password;
     private String rol;
+
+    public Usuario() {
+    }
 
     public Usuario(int id, String nombre, String documento, String telefono,
                    String correo, String rol) {
@@ -16,6 +20,14 @@ public class Usuario {
         this.documento = documento;
         this.telefono = telefono;
         this.correo = correo;
+        this.rol = rol;
+    }
+
+    public Usuario(int id, String nombre, String correo, String password, String rol) {
+        this.id = id;
+        this.nombre = nombre;
+        this.correo = correo;
+        this.password = password;
         this.rol = rol;
     }
 
@@ -57,6 +69,14 @@ public class Usuario {
 
     public void setCorreo(String correo) {
         this.correo = correo;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public String getRol() {
