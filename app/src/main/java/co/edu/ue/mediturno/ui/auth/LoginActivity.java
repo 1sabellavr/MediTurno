@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Patterns;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -44,10 +43,8 @@ public class LoginActivity extends AppCompatActivity {
     private void configurarEventos() {
         btnIngresar.setOnClickListener(v -> intentarLogin());
 
-        tvRegistro.setOnClickListener(v -> {
-            // TODO: abrir RegistroActivity cuando esté creada (siguiente pantalla de las vistas).
-            Toast.makeText(this, R.string.registro_proximamente, Toast.LENGTH_SHORT).show();
-        });
+        tvRegistro.setOnClickListener(v ->
+                startActivity(new Intent(this, RegistroActivity.class)));
     }
 
     private void intentarLogin() {

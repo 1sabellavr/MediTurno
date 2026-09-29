@@ -32,6 +32,10 @@
         </activity>
 
         <activity
+            android:name=".ui.auth.RegistroActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".MainActivity"
             android:exported="false" />
 
