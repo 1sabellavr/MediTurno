@@ -1,3 +1,17 @@
 <resources>
     <string name="app_name">MediTurno</string>
+
+    <!-- Login -->
+    <string name="login_titulo">Bienvenido a MediTurno</string>
+    <string name="login_subtitulo">Inicia sesión para gestionar tus citas</string>
+    <string name="hint_correo">Correo electrónico</string>
+    <string name="hint_contrasena">Contraseña</string>
+    <string name="btn_ingresar">Ingresar</string>
+    <string name="login_sin_cuenta">¿No tienes cuenta?</string>
+    <string name="login_registrate">Regístrate</string>
+    <string name="error_correo_vacio">Ingresa tu correo</string>
+    <string name="error_correo_invalido">El correo no tiene un formato válido</string>
+    <string name="error_contrasena_vacia">Ingresa tu contraseña</string>
+    <string name="error_contrasena_corta">Mínimo 6 caracteres</string>
+    <string name="registro_proximamente">El registro estará disponible pronto</string>
 </resources>
