@@ -1,17 +1,22 @@
 package co.edu.ue.mediturno.ui.citas;
 
+import android.Manifest;
 import android.content.Intent;
+import android.location.Location;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import co.edu.ue.mediturno.R;
 import co.edu.ue.mediturno.model.PuntoAtencion;
 import co.edu.ue.mediturno.util.PuntosAtencionDatos;
+import co.edu.ue.mediturno.util.UbicacionHelper;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.datepicker.CalendarConstraints;
 import com.google.android.material.datepicker.DateValidatorPointForward;
@@ -42,6 +47,7 @@ public class CitaFormActivity extends AppCompatActivity {
 
     private TextView tvTituloForm;
     private TextView tvDireccionPunto;
+    private TextView tvDistancia;
     private TextInputLayout tilPaciente;
     private TextInputLayout tilMedico;
     private TextInputLayout tilPunto;
@@ -54,6 +60,7 @@ public class CitaFormActivity extends AppCompatActivity {
     private TextInputEditText etHora;
     private TextInputEditText etMotivo;
     private MaterialAutoCompleteTextView actvPunto;
+    private MaterialButton btnSedeCercana;
     private MaterialButton btnCancelar;
     private MaterialButton btnGuardar;
 
@@ -61,7 +68,19 @@ public class CitaFormActivity extends AppCompatActivity {
     private boolean modoEdicion;
     private List<PuntoAtencion> puntos;
     private PuntoAtencion puntoSeleccionado;
+    private Location ubicacionActual;
     private SimpleDateFormat formatoFecha;
+
+    private final ActivityResultLauncher<String[]> permisoUbicacion =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(),
+                    resultado -> {
+                        if (UbicacionHelper.tienePermiso(this)) {
+                            buscarSedeCercana();
+                        } else {
+                            Toast.makeText(this, R.string.ubicacion_permiso_denegado,
+                                    Toast.LENGTH_LONG).show();
+                        }
+                    });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,6 +100,7 @@ public class CitaFormActivity extends AppCompatActivity {
     private void inicializarVistas() {
         tvTituloForm = findViewById(R.id.tvTituloForm);
         tvDireccionPunto = findViewById(R.id.tvDireccionPunto);
+        tvDistancia = findViewById(R.id.tvDistancia);
         tilPaciente = findViewById(R.id.tilPaciente);
         tilMedico = findViewById(R.id.tilMedico);
         tilPunto = findViewById(R.id.tilPunto);
@@ -90,6 +110,7 @@ public class CitaFormActivity extends AppCompatActivity {
         etPaciente = findViewById(R.id.etPaciente);
         etMedico = findViewById(R.id.etMedico);
         actvPunto = findViewById(R.id.actvPunto);
+        btnSedeCercana = findViewById(R.id.btnSedeCercana);
         etFecha = findViewById(R.id.etFecha);
         etHora = findViewById(R.id.etHora);
         etMotivo = findViewById(R.id.etMotivo);
@@ -118,6 +139,16 @@ public class CitaFormActivity extends AppCompatActivity {
         tilPunto.setError(null);
         tvDireccionPunto.setText(punto.getDireccion());
         tvDireccionPunto.setVisibility(View.VISIBLE);
+        actualizarDistancia();
+    }
+
+    private void actualizarDistancia() {
+        if (ubicacionActual != null && puntoSeleccionado != null) {
+            float metros = UbicacionHelper.distanciaMetros(ubicacionActual, puntoSeleccionado);
+            tvDistancia.setText(getString(R.string.distancia_a_ti,
+                    UbicacionHelper.formatearDistancia(metros)));
+            tvDistancia.setVisibility(View.VISIBLE);
+        }
     }
 
     private void cargarDatosSiEsEdicion() {
@@ -149,8 +180,60 @@ public class CitaFormActivity extends AppCompatActivity {
         tilFecha.setEndIconOnClickListener(v -> mostrarSelectorFecha());
         etHora.setOnClickListener(v -> mostrarSelectorHora());
         tilHora.setEndIconOnClickListener(v -> mostrarSelectorHora());
+        btnSedeCercana.setOnClickListener(v -> solicitarSedeCercana());
         btnCancelar.setOnClickListener(v -> finish());
         btnGuardar.setOnClickListener(v -> guardar());
+    }
+
+    // ---------- GPS del dispositivo ----------
+
+    private void solicitarSedeCercana() {
+        if (UbicacionHelper.tienePermiso(this)) {
+            buscarSedeCercana();
+        } else {
+            permisoUbicacion.launch(new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION});
+        }
+    }
+
+    private void buscarSedeCercana() {
+        tvDistancia.setText(R.string.ubicacion_obteniendo);
+        tvDistancia.setVisibility(View.VISIBLE);
+        btnSedeCercana.setEnabled(false);
+
+        UbicacionHelper.obtenerUbicacion(this, new UbicacionHelper.Callback() {
+            @Override
+            public void onUbicacion(Location ubicacion) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                btnSedeCercana.setEnabled(true);
+                ubicacionActual = ubicacion;
+
+                PuntoAtencion cercano = UbicacionHelper.masCercano(ubicacion, puntos);
+                if (cercano != null) {
+                    actvPunto.setText(cercano.getNombre(), false);
+                    seleccionarPunto(cercano);
+
+                    float metros = UbicacionHelper.distanciaMetros(ubicacion, cercano);
+                    tvDistancia.setText(getString(R.string.sede_cercana_elegida,
+                            cercano.getNombre(), UbicacionHelper.formatearDistancia(metros)));
+                    tvDistancia.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void onError() {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                btnSedeCercana.setEnabled(true);
+                tvDistancia.setVisibility(View.GONE);
+                Toast.makeText(CitaFormActivity.this, R.string.ubicacion_no_disponible,
+                        Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     // ---------- Fecha y hora ----------
