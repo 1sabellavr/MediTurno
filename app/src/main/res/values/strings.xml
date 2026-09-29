@@ -85,4 +85,35 @@
     <string name="medicamento_eliminado">Medicamento eliminado</string>
     <string name="eliminar_medicamento_titulo">Eliminar medicamento</string>
     <string name="eliminar_medicamento_mensaje">¿Seguro que deseas eliminar %1$s del inventario?</string>
+
+    <!-- Citas -->
+    <string name="citas_vacio">No hay citas programadas</string>
+    <string name="btn_nueva_cita">Nueva cita</string>
+    <string name="btn_reprogramar">Reprogramar</string>
+    <string name="btn_cancelar_cita">Cancelar cita</string>
+    <string name="btn_volver">Volver</string>
+    <string name="estado_programada">Programada</string>
+    <string name="estado_cancelada">Cancelada</string>
+    <string name="item_medico">Médico: %1$s</string>
+    <string name="item_fecha_hora">%1$s · %2$s</string>
+    <string name="item_motivo">Motivo: %1$s</string>
+    <string name="cita_form_titulo_crear">Nueva cita</string>
+    <string name="cita_form_titulo_editar">Reprogramar cita</string>
+    <string name="hint_paciente">Paciente</string>
+    <string name="hint_medico">Médico</string>
+    <string name="hint_motivo">Motivo de la consulta</string>
+    <string name="hint_fecha_cita">Fecha</string>
+    <string name="hint_hora_cita">Hora</string>
+    <string name="fecha_cita_picker_titulo">Selecciona la fecha de la cita</string>
+    <string name="hora_picker_titulo">Selecciona la hora de la cita</string>
+    <string name="error_paciente_vacio">Ingresa el nombre del paciente</string>
+    <string name="error_medico_vacio">Ingresa el nombre del médico</string>
+    <string name="error_motivo_vacio">Ingresa el motivo de la consulta</string>
+    <string name="error_fecha_cita_vacia">Selecciona la fecha</string>
+    <string name="error_hora_cita_vacia">Selecciona la hora</string>
+    <string name="error_cita_pasada">La fecha y la hora ya pasaron</string>
+    <string name="cita_guardada">Cita guardada</string>
+    <string name="cita_cancelada">Cita cancelada</string>
+    <string name="cancelar_cita_titulo">Cancelar cita</string>
+    <string name="cancelar_cita_mensaje">¿Seguro que deseas cancelar la cita de %1$s?</string>
 </resources>

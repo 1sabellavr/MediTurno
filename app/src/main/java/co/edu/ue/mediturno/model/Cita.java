@@ -1,25 +1,26 @@
 package co.edu.ue.mediturno.model;
 
-/**
- * CLASE MODELO: Cita
- * Representa un turno o cita de entrega de medicamentos registrada por un paciente.
- */
 public class Cita {
+
+    public static final String ESTADO_PROGRAMADA = "PROGRAMADA";
+    public static final String ESTADO_CANCELADA = "CANCELADA";
+
     private int id;
-    private int idUsuario;
-    private String medicamento;
+    private String paciente;
+    private String medico;
     private String fecha;
     private String hora;
-    private String puntoAtencion;
-    private String estado; // "PENDIENTE", "ATENDIDO", "CANCELADO"
+    private String motivo;
+    private String estado;
 
-    public Cita(int id, int idUsuario, String medicamento, String fecha, String hora, String puntoAtencion, String estado) {
+    public Cita(int id, String paciente, String medico, String fecha, String hora,
+                String motivo, String estado) {
         this.id = id;
-        this.idUsuario = idUsuario;
-        this.medicamento = medicamento;
+        this.paciente = paciente;
+        this.medico = medico;
         this.fecha = fecha;
         this.hora = hora;
-        this.puntoAtencion = puntoAtencion;
+        this.motivo = motivo;
         this.estado = estado;
     }
 
@@ -31,20 +32,20 @@ public class Cita {
         this.id = id;
     }
 
-    public int getIdUsuario() {
-        return idUsuario;
+    public String getPaciente() {
+        return paciente;
     }
 
-    public void setIdUsuario(int idUsuario) {
-        this.idUsuario = idUsuario;
+    public void setPaciente(String paciente) {
+        this.paciente = paciente;
     }
 
-    public String getMedicamento() {
-        return medicamento;
+    public String getMedico() {
+        return medico;
     }
 
-    public void setMedicamento(String medicamento) {
-        this.medicamento = medicamento;
+    public void setMedico(String medico) {
+        this.medico = medico;
     }
 
     public String getFecha() {
@@ -63,12 +64,12 @@ public class Cita {
         this.hora = hora;
     }
 
-    public String getPuntoAtencion() {
-        return puntoAtencion;
+    public String getMotivo() {
+        return motivo;
     }
 
-    public void setPuntoAtencion(String puntoAtencion) {
-        this.puntoAtencion = puntoAtencion;
+    public void setMotivo(String motivo) {
+        this.motivo = motivo;
     }
 
     public String getEstado() {
