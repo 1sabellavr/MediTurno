@@ -1,6 +1,7 @@
 package co.edu.ue.mediturno.adapter;
 
 import android.content.Context;
+import android.location.Location;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import co.edu.ue.mediturno.R;
 import co.edu.ue.mediturno.model.Cita;
 import co.edu.ue.mediturno.model.PuntoAtencion;
+import co.edu.ue.mediturno.util.UbicacionHelper;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 
@@ -27,14 +29,23 @@ public class CitaAdapter extends RecyclerView.Adapter<CitaAdapter.CitaViewHolder
         void onCancelar(Cita cita);
 
         void onVerMapa(Cita cita);
+
+        void onComoLlegar(Cita cita);
     }
 
     private final List<Cita> citas;
     private final OnCitaListener listener;
+    private Location ubicacion;
 
     public CitaAdapter(List<Cita> citas, OnCitaListener listener) {
         this.citas = citas;
         this.listener = listener;
+    }
+
+    // Ubicación del GPS del dispositivo, para mostrar la distancia a cada punto de atención.
+    public void setUbicacion(Location ubicacion) {
+        this.ubicacion = ubicacion;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -61,10 +72,20 @@ public class CitaAdapter extends RecyclerView.Adapter<CitaAdapter.CitaViewHolder
             holder.tvPunto.setVisibility(View.VISIBLE);
             holder.tvPunto.setText(contexto.getString(R.string.item_punto,
                     punto.getNombre(), punto.getDireccion()));
-            holder.btnVerMapa.setVisibility(View.VISIBLE);
+            holder.llMapa.setVisibility(View.VISIBLE);
+
+            if (ubicacion != null) {
+                float metros = UbicacionHelper.distanciaMetros(ubicacion, punto);
+                holder.tvDistancia.setVisibility(View.VISIBLE);
+                holder.tvDistancia.setText(contexto.getString(R.string.distancia_a_ti,
+                        UbicacionHelper.formatearDistancia(metros)));
+            } else {
+                holder.tvDistancia.setVisibility(View.GONE);
+            }
         } else {
             holder.tvPunto.setVisibility(View.GONE);
-            holder.btnVerMapa.setVisibility(View.GONE);
+            holder.tvDistancia.setVisibility(View.GONE);
+            holder.llMapa.setVisibility(View.GONE);
         }
 
         boolean cancelada = Cita.ESTADO_CANCELADA.equals(cita.getEstado());
@@ -85,6 +106,13 @@ public class CitaAdapter extends RecyclerView.Adapter<CitaAdapter.CitaViewHolder
             int posicion = holder.getBindingAdapterPosition();
             if (posicion != RecyclerView.NO_POSITION) {
                 listener.onVerMapa(citas.get(posicion));
+            }
+        });
+
+        holder.btnComoLlegar.setOnClickListener(v -> {
+            int posicion = holder.getBindingAdapterPosition();
+            if (posicion != RecyclerView.NO_POSITION) {
+                listener.onComoLlegar(citas.get(posicion));
             }
         });
 
@@ -114,10 +142,13 @@ public class CitaAdapter extends RecyclerView.Adapter<CitaAdapter.CitaViewHolder
         final TextView tvFechaHora;
         final TextView tvMedico;
         final TextView tvPunto;
+        final TextView tvDistancia;
         final TextView tvMotivo;
         final Chip chipEstado;
+        final LinearLayout llMapa;
         final LinearLayout llAcciones;
         final MaterialButton btnVerMapa;
+        final MaterialButton btnComoLlegar;
         final MaterialButton btnReprogramar;
         final MaterialButton btnCancelarCita;
 
@@ -127,10 +158,13 @@ public class CitaAdapter extends RecyclerView.Adapter<CitaAdapter.CitaViewHolder
             tvFechaHora = itemView.findViewById(R.id.tvFechaHora);
             tvMedico = itemView.findViewById(R.id.tvMedico);
             tvPunto = itemView.findViewById(R.id.tvPunto);
+            tvDistancia = itemView.findViewById(R.id.tvDistancia);
             tvMotivo = itemView.findViewById(R.id.tvMotivo);
             chipEstado = itemView.findViewById(R.id.chipEstado);
+            llMapa = itemView.findViewById(R.id.llMapa);
             llAcciones = itemView.findViewById(R.id.llAcciones);
             btnVerMapa = itemView.findViewById(R.id.btnVerMapa);
+            btnComoLlegar = itemView.findViewById(R.id.btnComoLlegar);
             btnReprogramar = itemView.findViewById(R.id.btnReprogramar);
             btnCancelarCita = itemView.findViewById(R.id.btnCancelarCita);
         }

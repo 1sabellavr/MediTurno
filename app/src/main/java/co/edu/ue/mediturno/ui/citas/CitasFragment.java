@@ -1,8 +1,10 @@
 package co.edu.ue.mediturno.ui.citas;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -25,6 +27,7 @@ import co.edu.ue.mediturno.model.Cita;
 import co.edu.ue.mediturno.model.PuntoAtencion;
 import co.edu.ue.mediturno.util.NotificacionHelper;
 import co.edu.ue.mediturno.util.PuntosAtencionDatos;
+import co.edu.ue.mediturno.util.UbicacionHelper;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
@@ -34,10 +37,14 @@ import java.util.Locale;
 
 public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListener {
 
+    // Evita volver a pedir el permiso cada vez que se entra a la pestaña.
+    private static boolean permisoUbicacionSolicitado = false;
+
     private final List<Cita> citas = new ArrayList<>();
     private CitaAdapter adapter;
     private TextView tvVacio;
     private ActivityResultLauncher<Intent> formLauncher;
+    private ActivityResultLauncher<String[]> permisoUbicacion;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -49,6 +56,20 @@ public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListene
                     if (result.getResultCode() == Activity.RESULT_OK
                             && result.getData() != null) {
                         procesarResultado(result.getData());
+                    }
+                });
+
+        permisoUbicacion = registerForActivityResult(
+                new ActivityResultContracts.RequestMultiplePermissions(),
+                resultado -> {
+                    if (!isAdded()) {
+                        return;
+                    }
+                    if (UbicacionHelper.tienePermiso(requireContext())) {
+                        leerUbicacionDelDispositivo();
+                    } else {
+                        Toast.makeText(requireContext(), R.string.ubicacion_permiso_denegado,
+                                Toast.LENGTH_LONG).show();
                     }
                 });
 
@@ -75,6 +96,46 @@ public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListene
         actualizarVacio();
         return vista;
     }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        iniciarUbicacion();
+    }
+
+    // ---------- GPS del dispositivo ----------
+
+    private void iniciarUbicacion() {
+        if (UbicacionHelper.tienePermiso(requireContext())) {
+            leerUbicacionDelDispositivo();
+        } else if (!permisoUbicacionSolicitado) {
+            permisoUbicacionSolicitado = true;
+            permisoUbicacion.launch(new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION});
+        }
+    }
+
+    private void leerUbicacionDelDispositivo() {
+        UbicacionHelper.obtenerUbicacion(requireContext(), new UbicacionHelper.Callback() {
+            @Override
+            public void onUbicacion(Location ubicacion) {
+                if (isAdded()) {
+                    adapter.setUbicacion(ubicacion);
+                }
+            }
+
+            @Override
+            public void onError() {
+                if (isAdded()) {
+                    Toast.makeText(requireContext(), R.string.ubicacion_no_disponible,
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+    }
+
+    // ---------- Datos ----------
 
     private void cargarDatosDePrueba() {
         // TODO-API: GET /citas
@@ -155,6 +216,8 @@ public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListene
         return maximo + 1;
     }
 
+    // ---------- Acciones de cada tarjeta ----------
+
     @Override
     public void onReprogramar(Cita cita) {
         Intent intent = new Intent(requireContext(), CitaFormActivity.class);
@@ -200,12 +263,40 @@ public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListene
                 punto.getLatitud(), punto.getLongitud());
         Uri uri = Uri.parse("geo:" + coordenadas + "?q=" + coordenadas
                 + "(" + Uri.encode(punto.getNombre()) + ")");
-        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
 
         try {
-            startActivity(intent);
+            startActivity(new Intent(Intent.ACTION_VIEW, uri));
         } catch (ActivityNotFoundException e) {
             Toast.makeText(requireContext(), R.string.sin_app_mapas, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onComoLlegar(Cita cita) {
+        PuntoAtencion punto = cita.getPuntoAtencion();
+        if (punto == null) {
+            return;
+        }
+
+        String destino = String.format(Locale.US, "%f,%f",
+                punto.getLatitud(), punto.getLongitud());
+
+        // La app de mapas usa el GPS del dispositivo como punto de partida.
+        Intent navegacion = new Intent(Intent.ACTION_VIEW,
+                Uri.parse("google.navigation:q=" + destino));
+        navegacion.setPackage("com.google.android.apps.maps");
+
+        try {
+            startActivity(navegacion);
+        } catch (ActivityNotFoundException e) {
+            Intent web = new Intent(Intent.ACTION_VIEW, Uri.parse(
+                    "https://www.google.com/maps/dir/?api=1&destination=" + destino));
+            try {
+                startActivity(web);
+            } catch (ActivityNotFoundException e2) {
+                Toast.makeText(requireContext(), R.string.sin_app_mapas,
+                        Toast.LENGTH_SHORT).show();
+            }
         }
     }
 }
