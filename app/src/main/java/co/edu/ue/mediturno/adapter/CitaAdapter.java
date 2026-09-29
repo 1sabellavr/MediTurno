@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import co.edu.ue.mediturno.R;
 import co.edu.ue.mediturno.model.Cita;
+import co.edu.ue.mediturno.model.PuntoAtencion;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 
@@ -24,6 +25,8 @@ public class CitaAdapter extends RecyclerView.Adapter<CitaAdapter.CitaViewHolder
         void onReprogramar(Cita cita);
 
         void onCancelar(Cita cita);
+
+        void onVerMapa(Cita cita);
     }
 
     private final List<Cita> citas;
@@ -53,6 +56,17 @@ public class CitaAdapter extends RecyclerView.Adapter<CitaAdapter.CitaViewHolder
         holder.tvMedico.setText(contexto.getString(R.string.item_medico, cita.getMedico()));
         holder.tvMotivo.setText(contexto.getString(R.string.item_motivo, cita.getMotivo()));
 
+        PuntoAtencion punto = cita.getPuntoAtencion();
+        if (punto != null) {
+            holder.tvPunto.setVisibility(View.VISIBLE);
+            holder.tvPunto.setText(contexto.getString(R.string.item_punto,
+                    punto.getNombre(), punto.getDireccion()));
+            holder.btnVerMapa.setVisibility(View.VISIBLE);
+        } else {
+            holder.tvPunto.setVisibility(View.GONE);
+            holder.btnVerMapa.setVisibility(View.GONE);
+        }
+
         boolean cancelada = Cita.ESTADO_CANCELADA.equals(cita.getEstado());
         if (cancelada) {
             holder.chipEstado.setText(R.string.estado_cancelada);
@@ -66,6 +80,13 @@ public class CitaAdapter extends RecyclerView.Adapter<CitaAdapter.CitaViewHolder
                     ContextCompat.getColor(contexto, R.color.verde_secundario));
             holder.llAcciones.setVisibility(View.VISIBLE);
         }
+
+        holder.btnVerMapa.setOnClickListener(v -> {
+            int posicion = holder.getBindingAdapterPosition();
+            if (posicion != RecyclerView.NO_POSITION) {
+                listener.onVerMapa(citas.get(posicion));
+            }
+        });
 
         holder.btnReprogramar.setOnClickListener(v -> {
             int posicion = holder.getBindingAdapterPosition();
@@ -92,9 +113,11 @@ public class CitaAdapter extends RecyclerView.Adapter<CitaAdapter.CitaViewHolder
         final TextView tvPaciente;
         final TextView tvFechaHora;
         final TextView tvMedico;
+        final TextView tvPunto;
         final TextView tvMotivo;
         final Chip chipEstado;
         final LinearLayout llAcciones;
+        final MaterialButton btnVerMapa;
         final MaterialButton btnReprogramar;
         final MaterialButton btnCancelarCita;
 
@@ -103,9 +126,11 @@ public class CitaAdapter extends RecyclerView.Adapter<CitaAdapter.CitaViewHolder
             tvPaciente = itemView.findViewById(R.id.tvPaciente);
             tvFechaHora = itemView.findViewById(R.id.tvFechaHora);
             tvMedico = itemView.findViewById(R.id.tvMedico);
+            tvPunto = itemView.findViewById(R.id.tvPunto);
             tvMotivo = itemView.findViewById(R.id.tvMotivo);
             chipEstado = itemView.findViewById(R.id.chipEstado);
             llAcciones = itemView.findViewById(R.id.llAcciones);
+            btnVerMapa = itemView.findViewById(R.id.btnVerMapa);
             btnReprogramar = itemView.findViewById(R.id.btnReprogramar);
             btnCancelarCita = itemView.findViewById(R.id.btnCancelarCita);
         }

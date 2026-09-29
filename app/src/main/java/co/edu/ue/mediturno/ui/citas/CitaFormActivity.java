@@ -2,16 +2,21 @@ package co.edu.ue.mediturno.ui.citas;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import co.edu.ue.mediturno.R;
+import co.edu.ue.mediturno.model.PuntoAtencion;
+import co.edu.ue.mediturno.util.PuntosAtencionDatos;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.datepicker.CalendarConstraints;
 import com.google.android.material.datepicker.DateValidatorPointForward;
 import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.textfield.MaterialAutoCompleteTextView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.timepicker.MaterialTimePicker;
@@ -19,7 +24,9 @@ import com.google.android.material.timepicker.TimeFormat;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
@@ -31,10 +38,13 @@ public class CitaFormActivity extends AppCompatActivity {
     public static final String EXTRA_FECHA = "fecha";
     public static final String EXTRA_HORA = "hora";
     public static final String EXTRA_MOTIVO = "motivo";
+    public static final String EXTRA_PUNTO_ID = "punto_id";
 
     private TextView tvTituloForm;
+    private TextView tvDireccionPunto;
     private TextInputLayout tilPaciente;
     private TextInputLayout tilMedico;
+    private TextInputLayout tilPunto;
     private TextInputLayout tilFecha;
     private TextInputLayout tilHora;
     private TextInputLayout tilMotivo;
@@ -43,11 +53,14 @@ public class CitaFormActivity extends AppCompatActivity {
     private TextInputEditText etFecha;
     private TextInputEditText etHora;
     private TextInputEditText etMotivo;
+    private MaterialAutoCompleteTextView actvPunto;
     private MaterialButton btnCancelar;
     private MaterialButton btnGuardar;
 
     private int idCita;
     private boolean modoEdicion;
+    private List<PuntoAtencion> puntos;
+    private PuntoAtencion puntoSeleccionado;
     private SimpleDateFormat formatoFecha;
 
     @Override
@@ -60,24 +73,51 @@ public class CitaFormActivity extends AppCompatActivity {
         formatoFecha.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         inicializarVistas();
+        configurarPuntosAtencion();
         cargarDatosSiEsEdicion();
         configurarEventos();
     }
 
     private void inicializarVistas() {
         tvTituloForm = findViewById(R.id.tvTituloForm);
+        tvDireccionPunto = findViewById(R.id.tvDireccionPunto);
         tilPaciente = findViewById(R.id.tilPaciente);
         tilMedico = findViewById(R.id.tilMedico);
+        tilPunto = findViewById(R.id.tilPunto);
         tilFecha = findViewById(R.id.tilFecha);
         tilHora = findViewById(R.id.tilHora);
         tilMotivo = findViewById(R.id.tilMotivo);
         etPaciente = findViewById(R.id.etPaciente);
         etMedico = findViewById(R.id.etMedico);
+        actvPunto = findViewById(R.id.actvPunto);
         etFecha = findViewById(R.id.etFecha);
         etHora = findViewById(R.id.etHora);
         etMotivo = findViewById(R.id.etMotivo);
         btnCancelar = findViewById(R.id.btnCancelar);
         btnGuardar = findViewById(R.id.btnGuardar);
+    }
+
+    private void configurarPuntosAtencion() {
+        // TODO-API: GET /puntos-atencion (ver PuntosAtencionDatos).
+        puntos = PuntosAtencionDatos.obtenerTodos();
+
+        List<String> nombres = new ArrayList<>();
+        for (PuntoAtencion punto : puntos) {
+            nombres.add(punto.getNombre());
+        }
+
+        ArrayAdapter<String> adaptador = new ArrayAdapter<>(
+                this, android.R.layout.simple_dropdown_item_1line, nombres);
+        actvPunto.setAdapter(adaptador);
+        actvPunto.setOnItemClickListener((parent, view, position, id) ->
+                seleccionarPunto(puntos.get(position)));
+    }
+
+    private void seleccionarPunto(PuntoAtencion punto) {
+        puntoSeleccionado = punto;
+        tilPunto.setError(null);
+        tvDireccionPunto.setText(punto.getDireccion());
+        tvDireccionPunto.setVisibility(View.VISIBLE);
     }
 
     private void cargarDatosSiEsEdicion() {
@@ -92,6 +132,13 @@ public class CitaFormActivity extends AppCompatActivity {
             etFecha.setText(intent.getStringExtra(EXTRA_FECHA));
             etHora.setText(intent.getStringExtra(EXTRA_HORA));
             etMotivo.setText(intent.getStringExtra(EXTRA_MOTIVO));
+
+            PuntoAtencion punto = PuntosAtencionDatos.buscarPorId(
+                    intent.getIntExtra(EXTRA_PUNTO_ID, 0));
+            if (punto != null) {
+                actvPunto.setText(punto.getNombre(), false);
+                seleccionarPunto(punto);
+            }
         } else {
             tvTituloForm.setText(R.string.cita_form_titulo_crear);
         }
@@ -105,6 +152,8 @@ public class CitaFormActivity extends AppCompatActivity {
         btnCancelar.setOnClickListener(v -> finish());
         btnGuardar.setOnClickListener(v -> guardar());
     }
+
+    // ---------- Fecha y hora ----------
 
     private void mostrarSelectorFecha() {
         // Solo se pueden elegir fechas desde hoy en adelante.
@@ -162,6 +211,8 @@ public class CitaFormActivity extends AppCompatActivity {
         selector.show(getSupportFragmentManager(), "hora_cita");
     }
 
+    // ---------- Guardar y validar ----------
+
     private String texto(TextInputEditText campo) {
         return campo.getText() != null ? campo.getText().toString().trim() : "";
     }
@@ -177,17 +228,16 @@ public class CitaFormActivity extends AppCompatActivity {
             return;
         }
 
-        // TODO-API: si modoEdicion es false -> POST /citas (envía paciente, médico, fecha,
-        // hora y motivo). Si es true (reprogramar) -> PUT /citas/{id} con los mismos campos.
+        // TODO-API: si modoEdicion es false -> POST /citas (envía paciente, médico, id del
+        // punto de atención, fecha, hora y motivo). Si es true (reprogramar) ->
+        // PUT /citas/{id} con los mismos campos.
         // Reemplazar el resultado de prueba de abajo por la respuesta real de la API
         // y mostrar el error si el médico ya tiene una cita en esa fecha y hora.
-
-        // TODO: al integrar notificaciones y GPS (siguiente paso), programar aquí el
-        // recordatorio de la cita y guardar la ubicación elegida.
         Intent resultado = new Intent();
         resultado.putExtra(EXTRA_ID, idCita);
         resultado.putExtra(EXTRA_PACIENTE, paciente);
         resultado.putExtra(EXTRA_MEDICO, medico);
+        resultado.putExtra(EXTRA_PUNTO_ID, puntoSeleccionado.getId());
         resultado.putExtra(EXTRA_FECHA, fecha);
         resultado.putExtra(EXTRA_HORA, hora);
         resultado.putExtra(EXTRA_MOTIVO, motivo);
@@ -203,6 +253,7 @@ public class CitaFormActivity extends AppCompatActivity {
 
         tilPaciente.setError(null);
         tilMedico.setError(null);
+        tilPunto.setError(null);
         tilFecha.setError(null);
         tilHora.setError(null);
         tilMotivo.setError(null);
@@ -214,6 +265,11 @@ public class CitaFormActivity extends AppCompatActivity {
 
         if (medico.isEmpty()) {
             tilMedico.setError(getString(R.string.error_medico_vacio));
+            valido = false;
+        }
+
+        if (puntoSeleccionado == null) {
+            tilPunto.setError(getString(R.string.error_punto_vacio));
             valido = false;
         }
 

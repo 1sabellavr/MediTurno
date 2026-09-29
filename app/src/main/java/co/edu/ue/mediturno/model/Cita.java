@@ -12,9 +12,10 @@ public class Cita {
     private String hora;
     private String motivo;
     private String estado;
+    private PuntoAtencion puntoAtencion;
 
     public Cita(int id, String paciente, String medico, String fecha, String hora,
-                String motivo, String estado) {
+                String motivo, String estado, PuntoAtencion puntoAtencion) {
         this.id = id;
         this.paciente = paciente;
         this.medico = medico;
@@ -22,6 +23,7 @@ public class Cita {
         this.hora = hora;
         this.motivo = motivo;
         this.estado = estado;
+        this.puntoAtencion = puntoAtencion;
     }
 
     public int getId() {
@@ -78,5 +80,13 @@ public class Cita {
 
     public void setEstado(String estado) {
         this.estado = estado;
+    }
+
+    public PuntoAtencion getPuntoAtencion() {
+        return puntoAtencion;
+    }
+
+    public void setPuntoAtencion(PuntoAtencion puntoAtencion) {
+        this.puntoAtencion = puntoAtencion;
     }
 }

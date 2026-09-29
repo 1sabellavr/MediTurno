@@ -1,7 +1,9 @@
 package co.edu.ue.mediturno.ui.citas;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,12 +22,15 @@ import androidx.recyclerview.widget.RecyclerView;
 import co.edu.ue.mediturno.R;
 import co.edu.ue.mediturno.adapter.CitaAdapter;
 import co.edu.ue.mediturno.model.Cita;
+import co.edu.ue.mediturno.model.PuntoAtencion;
 import co.edu.ue.mediturno.util.NotificacionHelper;
+import co.edu.ue.mediturno.util.PuntosAtencionDatos;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListener {
 
@@ -73,17 +78,20 @@ public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListene
 
     private void cargarDatosDePrueba() {
         // TODO-API: GET /citas
-        // Recibe: lista de Cita (id, paciente, médico, fecha, hora, motivo y estado).
+        // Recibe: lista de Cita (id, paciente, médico, fecha, hora, motivo, estado y punto
+        // de atención).
         // Reemplazar estos datos de prueba por la respuesta de la API.
         // Al cargar las citas reales, volver a programar los recordatorios de las citas
         // futuras con NotificacionHelper.programarRecordatorio(), porque las alarmas
         // locales se pierden si el teléfono se reinicia.
         citas.add(new Cita(1, "María Rodríguez", "Dr. Carlos Pérez", "05/10/2026", "09:30",
-                "Control general", Cita.ESTADO_PROGRAMADA));
+                "Control general", Cita.ESTADO_PROGRAMADA, PuntosAtencionDatos.buscarPorId(1)));
         citas.add(new Cita(2, "Andrés Torres", "Dra. Laura Gómez", "07/10/2026", "14:00",
-                "Dolor de cabeza frecuente", Cita.ESTADO_PROGRAMADA));
+                "Dolor de cabeza frecuente", Cita.ESTADO_PROGRAMADA,
+                PuntosAtencionDatos.buscarPorId(2)));
         citas.add(new Cita(3, "Sofía Herrera", "Dr. Carlos Pérez", "10/10/2026", "11:15",
-                "Revisión de resultados de laboratorio", Cita.ESTADO_CANCELADA));
+                "Revisión de resultados de laboratorio", Cita.ESTADO_CANCELADA,
+                PuntosAtencionDatos.buscarPorId(1)));
     }
 
     private void actualizarVacio() {
@@ -97,12 +105,14 @@ public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListene
         String fecha = data.getStringExtra(CitaFormActivity.EXTRA_FECHA);
         String hora = data.getStringExtra(CitaFormActivity.EXTRA_HORA);
         String motivo = data.getStringExtra(CitaFormActivity.EXTRA_MOTIVO);
+        PuntoAtencion punto = PuntosAtencionDatos.buscarPorId(
+                data.getIntExtra(CitaFormActivity.EXTRA_PUNTO_ID, 0));
 
         Cita citaGuardada = null;
 
         if (id == 0) {
             citaGuardada = new Cita(siguienteId(), paciente, medico, fecha, hora, motivo,
-                    Cita.ESTADO_PROGRAMADA);
+                    Cita.ESTADO_PROGRAMADA, punto);
             citas.add(citaGuardada);
         } else {
             for (Cita cita : citas) {
@@ -112,6 +122,7 @@ public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListene
                     cita.setFecha(fecha);
                     cita.setHora(hora);
                     cita.setMotivo(motivo);
+                    cita.setPuntoAtencion(punto);
                     citaGuardada = cita;
                     break;
                 }
@@ -153,6 +164,9 @@ public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListene
         intent.putExtra(CitaFormActivity.EXTRA_FECHA, cita.getFecha());
         intent.putExtra(CitaFormActivity.EXTRA_HORA, cita.getHora());
         intent.putExtra(CitaFormActivity.EXTRA_MOTIVO, cita.getMotivo());
+        if (cita.getPuntoAtencion() != null) {
+            intent.putExtra(CitaFormActivity.EXTRA_PUNTO_ID, cita.getPuntoAtencion().getId());
+        }
         formLauncher.launch(intent);
     }
 
@@ -173,5 +187,25 @@ public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListene
                             Toast.LENGTH_SHORT).show();
                 })
                 .show();
+    }
+
+    @Override
+    public void onVerMapa(Cita cita) {
+        PuntoAtencion punto = cita.getPuntoAtencion();
+        if (punto == null) {
+            return;
+        }
+
+        String coordenadas = String.format(Locale.US, "%f,%f",
+                punto.getLatitud(), punto.getLongitud());
+        Uri uri = Uri.parse("geo:" + coordenadas + "?q=" + coordenadas
+                + "(" + Uri.encode(punto.getNombre()) + ")");
+        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+
+        try {
+            startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(requireContext(), R.string.sin_app_mapas, Toast.LENGTH_SHORT).show();
+        }
     }
 }

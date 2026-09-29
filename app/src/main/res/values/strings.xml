@@ -123,6 +123,12 @@
     <string name="notif_titulo">Recordatorio de cita</string>
     <string name="notif_texto">Tienes cita con %1$s a las %2$s</string>
     <string name="recordatorio_programado">Recordatorio programado</string>
-    <string name="recordatorio_no_programado">Faltan pocos minutos para la cita, no se programó recordatorio</string>
+    <string name="recordatorio_no_programado">Faltan pocos minutos para la cita, no se programó recordatorio</string>s
 
+    <!-- Puntos de atención -->
+    <string name="hint_punto_atencion">Punto de atención</string>
+    <string name="error_punto_vacio">Selecciona un punto de atención</string>
+    <string name="item_punto">Lugar: %1$s, %2$s</string>
+    <string name="btn_ver_mapa">Ver mapa</string>
+    <string name="sin_app_mapas">No hay una aplicación de mapas instalada</string>
 </resources>

@@ -58,6 +58,14 @@
             android:textSize="14sp" />
 
         <TextView
+            android:id="@+id/tvPunto"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/texto_secundario"
+            android:textSize="14sp" />
+
+        <TextView
             android:id="@+id/tvMotivo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -72,6 +80,13 @@
             android:layout_marginTop="8dp"
             android:gravity="end"
             android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnVerMapa"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_ver_mapa" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnReprogramar"
