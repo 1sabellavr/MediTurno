@@ -63,4 +63,26 @@
         <item>MEDICO</item>
         <item>PACIENTE</item>
     </string-array>
+
+    <!-- Inventario -->
+    <string name="inventario_vacio">No hay medicamentos en el inventario</string>
+    <string name="btn_nuevo_medicamento">Nuevo medicamento</string>
+    <string name="item_cantidad">Cantidad: %1$d</string>
+    <string name="item_vencimiento">Vence: %1$s</string>
+    <string name="stock_bajo">Stock bajo</string>
+    <string name="medicamento_form_titulo_crear">Nuevo medicamento</string>
+    <string name="medicamento_form_titulo_editar">Editar medicamento</string>
+    <string name="hint_medicamento_nombre">Nombre del medicamento</string>
+    <string name="hint_descripcion">Descripción (opcional)</string>
+    <string name="hint_cantidad">Cantidad disponible</string>
+    <string name="hint_vencimiento">Fecha de vencimiento</string>
+    <string name="fecha_picker_titulo">Selecciona la fecha de vencimiento</string>
+    <string name="error_medicamento_nombre_vacio">Ingresa el nombre del medicamento</string>
+    <string name="error_cantidad_vacia">Ingresa la cantidad</string>
+    <string name="error_cantidad_invalida">La cantidad debe ser un número entero mayor o igual a 0</string>
+    <string name="error_vencimiento_vacio">Selecciona la fecha de vencimiento</string>
+    <string name="medicamento_guardado">Medicamento guardado</string>
+    <string name="medicamento_eliminado">Medicamento eliminado</string>
+    <string name="eliminar_medicamento_titulo">Eliminar medicamento</string>
+    <string name="eliminar_medicamento_mensaje">¿Seguro que deseas eliminar %1$s del inventario?</string>
 </resources>
