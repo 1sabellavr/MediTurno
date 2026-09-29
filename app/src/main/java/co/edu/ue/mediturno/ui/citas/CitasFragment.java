@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import co.edu.ue.mediturno.R;
 import co.edu.ue.mediturno.adapter.CitaAdapter;
 import co.edu.ue.mediturno.model.Cita;
+import co.edu.ue.mediturno.util.NotificacionHelper;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
@@ -74,6 +75,9 @@ public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListene
         // TODO-API: GET /citas
         // Recibe: lista de Cita (id, paciente, médico, fecha, hora, motivo y estado).
         // Reemplazar estos datos de prueba por la respuesta de la API.
+        // Al cargar las citas reales, volver a programar los recordatorios de las citas
+        // futuras con NotificacionHelper.programarRecordatorio(), porque las alarmas
+        // locales se pierden si el teléfono se reinicia.
         citas.add(new Cita(1, "María Rodríguez", "Dr. Carlos Pérez", "05/10/2026", "09:30",
                 "Control general", Cita.ESTADO_PROGRAMADA));
         citas.add(new Cita(2, "Andrés Torres", "Dra. Laura Gómez", "07/10/2026", "14:00",
@@ -94,9 +98,12 @@ public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListene
         String hora = data.getStringExtra(CitaFormActivity.EXTRA_HORA);
         String motivo = data.getStringExtra(CitaFormActivity.EXTRA_MOTIVO);
 
+        Cita citaGuardada = null;
+
         if (id == 0) {
-            citas.add(new Cita(siguienteId(), paciente, medico, fecha, hora, motivo,
-                    Cita.ESTADO_PROGRAMADA));
+            citaGuardada = new Cita(siguienteId(), paciente, medico, fecha, hora, motivo,
+                    Cita.ESTADO_PROGRAMADA);
+            citas.add(citaGuardada);
         } else {
             for (Cita cita : citas) {
                 if (cita.getId() == id) {
@@ -105,6 +112,7 @@ public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListene
                     cita.setFecha(fecha);
                     cita.setHora(hora);
                     cita.setMotivo(motivo);
+                    citaGuardada = cita;
                     break;
                 }
             }
@@ -112,6 +120,18 @@ public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListene
 
         adapter.notifyDataSetChanged();
         actualizarVacio();
+
+        if (citaGuardada != null) {
+            programarRecordatorio(citaGuardada);
+        }
+    }
+
+    private void programarRecordatorio(Cita cita) {
+        boolean programado = NotificacionHelper.programarRecordatorio(requireContext(), cita);
+        Toast.makeText(requireContext(),
+                programado ? R.string.recordatorio_programado
+                        : R.string.recordatorio_no_programado,
+                Toast.LENGTH_LONG).show();
     }
 
     private int siguienteId() {
@@ -147,6 +167,7 @@ public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListene
                     // Envía: id de la cita. Recibe: la cita con estado CANCELADA.
                     // Cambiar el estado en la lista solo cuando la API confirme.
                     cita.setEstado(Cita.ESTADO_CANCELADA);
+                    NotificacionHelper.cancelarRecordatorio(requireContext(), cita.getId());
                     adapter.notifyDataSetChanged();
                     Toast.makeText(requireContext(), R.string.cita_cancelada,
                             Toast.LENGTH_SHORT).show();

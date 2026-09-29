@@ -1,18 +1,25 @@
 package co.edu.ue.mediturno;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import co.edu.ue.mediturno.ui.auth.LoginActivity;
 import co.edu.ue.mediturno.ui.citas.CitasFragment;
 import co.edu.ue.mediturno.ui.inventario.InventarioFragment;
 import co.edu.ue.mediturno.ui.usuarios.UsuariosFragment;
+import co.edu.ue.mediturno.util.NotificacionHelper;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -22,6 +29,12 @@ public class MainActivity extends AppCompatActivity {
     private BottomNavigationView bottomNav;
     private String rol;
 
+    private final ActivityResultLauncher<String> permisoNotificaciones =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(),
+                    concedido -> {
+                        // Si el usuario no lo concede, la app sigue funcionando sin recordatorios.
+                    });
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -30,10 +43,21 @@ public class MainActivity extends AppCompatActivity {
         String rolRecibido = getIntent().getStringExtra("rol");
         rol = rolRecibido != null ? rolRecibido : "";
 
+        NotificacionHelper.crearCanal(this);
+        solicitarPermisoNotificaciones();
+
         inicializarVistas();
         configurarToolbar();
         configurarMenuPorRol();
         configurarNavegacion(savedInstanceState);
+    }
+
+    private void solicitarPermisoNotificaciones() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && ContextCompat.checkSelfPermission(this,
+                Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            permisoNotificaciones.launch(Manifest.permission.POST_NOTIFICATIONS);
+        }
     }
 
     private void inicializarVistas() {
@@ -53,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void configurarMenuPorRol() {
-        // TODO-API: ajustar qué modulos ve cada rol según los roles que devuelva la API.
+        // TODO-API: ajustar qué módulos ve cada rol según los roles que devuelva la API.
         // Regla provisional: ADMIN ve todo y cualquier otro rol solo ve Citas.
         boolean esAdmin = "ADMIN".equalsIgnoreCase(rol);
 
@@ -131,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void cerrarSesion() {
-        // TODO: borrar el token y el rol guardados cuando exista el manejo de sesion.
+        // TODO: borrar el token y el rol guardados cuando exista el manejo de sesión.
         Intent intent = new Intent(this, LoginActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);

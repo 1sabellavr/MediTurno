@@ -116,4 +116,13 @@
     <string name="cita_cancelada">Cita cancelada</string>
     <string name="cancelar_cita_titulo">Cancelar cita</string>
     <string name="cancelar_cita_mensaje">¿Seguro que deseas cancelar la cita de %1$s?</string>
+
+    <!-- Notificaciones -->
+    <string name="canal_nombre">Recordatorios de citas</string>
+    <string name="canal_descripcion">Avisos antes de tus citas médicas</string>
+    <string name="notif_titulo">Recordatorio de cita</string>
+    <string name="notif_texto">Tienes cita con %1$s a las %2$s</string>
+    <string name="recordatorio_programado">Recordatorio programado</string>
+    <string name="recordatorio_no_programado">Faltan pocos minutos para la cita, no se programó recordatorio</string>
+
 </resources>
