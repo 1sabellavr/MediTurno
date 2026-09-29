@@ -13,5 +13,23 @@
     <string name="error_correo_invalido">El correo no tiene un formato válido</string>
     <string name="error_contrasena_vacia">Ingresa tu contraseña</string>
     <string name="error_contrasena_corta">Mínimo 6 caracteres</string>
-    <string name="registro_proximamente">El registro estará disponible pronto</string>
+
+    <!-- Registro -->
+    <string name="registro_titulo">Crea tu cuenta</string>
+    <string name="registro_subtitulo">Completa tus datos para registrarte</string>
+    <string name="hint_nombre">Nombre completo</string>
+    <string name="hint_documento">Número de documento</string>
+    <string name="hint_telefono">Teléfono</string>
+    <string name="hint_confirmar_contrasena">Confirmar contraseña</string>
+    <string name="btn_registrar">Registrarme</string>
+    <string name="registro_ya_tienes_cuenta">¿Ya tienes cuenta?</string>
+    <string name="registro_inicia_sesion">Inicia sesión</string>
+    <string name="error_nombre_vacio">Ingresa tu nombre completo</string>
+    <string name="error_documento_vacio">Ingresa tu número de documento</string>
+    <string name="error_documento_invalido">El documento debe tener entre 6 y 12 dígitos</string>
+    <string name="error_telefono_vacio">Ingresa tu teléfono</string>
+    <string name="error_telefono_invalido">El teléfono debe tener 10 dígitos</string>
+    <string name="error_confirmar_vacio">Confirma tu contraseña</string>
+    <string name="error_contrasenas_no_coinciden">Las contraseñas no coinciden</string>
+    <string name="registro_exitoso">Registro enviado. Ya puedes iniciar sesión</string>
 </resources>
