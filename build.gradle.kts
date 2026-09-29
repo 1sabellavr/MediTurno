@@ -2,3 +2,7 @@
 plugins {
     alias(libs.plugins.android.application) apply false
 }
+
+allprojects {
+    layout.buildDirectory.set(file("C:/tmp/MediTurno-build/${project.name}"))
+}

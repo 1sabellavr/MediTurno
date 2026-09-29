@@ -2,30 +2,25 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
+        android:name=".MediTurnoApp"
         android:allowBackup="true"
-        android:usesCleartextTraffic="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.MediTurno">
-
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="${MAPS_API_KEY}" />
+        android:theme="@style/Theme.MediTurno"
+        tools:targetApi="31">
 
         <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:windowSoftInputMode="adjustResize">
+            android:name=".ui.auth.LoginActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -33,9 +28,27 @@
         </activity>
 
         <activity
-            android:name=".MapsActivity"
+            android:name=".ui.auth.RegistroActivity"
             android:exported="false" />
 
-    </application>
+        <activity
+            android:name=".MainActivity"
+            android:exported="false" />
 
+        <activity
+            android:name=".ui.usuarios.UsuarioFormActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.inventario.MedicamentoFormActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.citas.CitaFormActivity"
+            android:exported="false" />
+
+        <receiver
+            android:name=".receiver.RecordatorioReceiver"
+            android:exported="false" />
+    </application>
 </manifest>
