@@ -123,7 +123,7 @@
     <string name="notif_titulo">Recordatorio de cita</string>
     <string name="notif_texto">Tienes cita con %1$s a las %2$s</string>
     <string name="recordatorio_programado">Recordatorio programado</string>
-    <string name="recordatorio_no_programado">Faltan pocos minutos para la cita, no se programó recordatorio</string>s
+    <string name="recordatorio_no_programado">Faltan pocos minutos para la cita, no se programó recordatorio</string>
 
     <!-- Puntos de atención -->
     <string name="hint_punto_atencion">Punto de atención</string>
@@ -131,4 +131,13 @@
     <string name="item_punto">Lugar: %1$s, %2$s</string>
     <string name="btn_ver_mapa">Ver mapa</string>
     <string name="sin_app_mapas">No hay una aplicación de mapas instalada</string>
+
+    <!-- Ubicación del dispositivo (GPS) -->
+    <string name="btn_sede_cercana">Sugerir la sede más cercana</string>
+    <string name="btn_como_llegar">Cómo llegar</string>
+    <string name="ubicacion_obteniendo">Obteniendo tu ubicación…</string>
+    <string name="ubicacion_permiso_denegado">Sin el permiso de ubicación no se puede calcular la distancia</string>
+    <string name="ubicacion_no_disponible">No se pudo obtener tu ubicación. Activa el GPS e inténtalo de nuevo</string>
+    <string name="sede_cercana_elegida">Sede más cercana: %1$s (a %2$s de ti)</string>
+    <string name="distancia_a_ti">A %1$s de tu ubicación</string>
 </resources>
