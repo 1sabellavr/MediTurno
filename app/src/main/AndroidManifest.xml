@@ -51,6 +51,10 @@
             android:name=".MapsActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".ui.citas.CitaFormActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>
