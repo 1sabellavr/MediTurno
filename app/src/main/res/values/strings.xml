@@ -39,4 +39,28 @@
     <string name="nav_citas">Citas</string>
     <string name="menu_cerrar_sesion">Cerrar sesión</string>
     <string name="placeholder_texto">Esta pantalla se construye en los siguientes pasos</string>
+
+    <!-- Usuarios -->
+    <string name="usuarios_vacio">No hay usuarios registrados</string>
+    <string name="btn_nuevo_usuario">Nuevo usuario</string>
+    <string name="btn_editar">Editar</string>
+    <string name="btn_eliminar">Eliminar</string>
+    <string name="btn_guardar">Guardar</string>
+    <string name="btn_cancelar">Cancelar</string>
+    <string name="item_documento">Doc. %1$s</string>
+    <string name="item_telefono">Tel. %1$s</string>
+    <string name="usuario_form_titulo_crear">Nuevo usuario</string>
+    <string name="usuario_form_titulo_editar">Editar usuario</string>
+    <string name="hint_rol">Rol</string>
+    <string name="error_rol_vacio">Selecciona un rol</string>
+    <string name="usuario_guardado">Usuario guardado</string>
+    <string name="usuario_eliminado">Usuario eliminado</string>
+    <string name="eliminar_usuario_titulo">Eliminar usuario</string>
+    <string name="eliminar_usuario_mensaje">¿Seguro que deseas eliminar a %1$s?</string>
+
+    <string-array name="roles">
+        <item>ADMIN</item>
+        <item>MEDICO</item>
+        <item>PACIENTE</item>
+    </string-array>
 </resources>
