@@ -1,3 +1,143 @@
 <resources>
     <string name="app_name">MediTurno</string>
+
+    <!-- Login -->
+    <string name="login_titulo">Bienvenido a MediTurno</string>
+    <string name="login_subtitulo">Inicia sesión para gestionar tus citas</string>
+    <string name="hint_correo">Correo electrónico</string>
+    <string name="hint_contrasena">Contraseña</string>
+    <string name="btn_ingresar">Ingresar</string>
+    <string name="login_sin_cuenta">¿No tienes cuenta?</string>
+    <string name="login_registrate">Regístrate</string>
+    <string name="error_correo_vacio">Ingresa tu correo</string>
+    <string name="error_correo_invalido">El correo no tiene un formato válido</string>
+    <string name="error_contrasena_vacia">Ingresa tu contraseña</string>
+    <string name="error_contrasena_corta">Mínimo 6 caracteres</string>
+
+    <!-- Registro -->
+    <string name="registro_titulo">Crea tu cuenta</string>
+    <string name="registro_subtitulo">Completa tus datos para registrarte</string>
+    <string name="hint_nombre">Nombre completo</string>
+    <string name="hint_documento">Número de documento</string>
+    <string name="hint_telefono">Teléfono</string>
+    <string name="hint_confirmar_contrasena">Confirmar contraseña</string>
+    <string name="btn_registrar">Registrarme</string>
+    <string name="registro_ya_tienes_cuenta">¿Ya tienes cuenta?</string>
+    <string name="registro_inicia_sesion">Inicia sesión</string>
+    <string name="error_nombre_vacio">Ingresa tu nombre completo</string>
+    <string name="error_documento_vacio">Ingresa tu número de documento</string>
+    <string name="error_documento_invalido">El documento debe tener entre 6 y 12 dígitos</string>
+    <string name="error_telefono_vacio">Ingresa tu teléfono</string>
+    <string name="error_telefono_invalido">El teléfono debe tener 10 dígitos</string>
+    <string name="error_confirmar_vacio">Confirma tu contraseña</string>
+    <string name="error_contrasenas_no_coinciden">Las contraseñas no coinciden</string>
+    <string name="registro_exitoso">Registro enviado. Ya puedes iniciar sesión</string>
+
+    <!-- Pantalla principal -->
+    <string name="nav_usuarios">Usuarios</string>
+    <string name="nav_inventario">Inventario</string>
+    <string name="nav_citas">Citas</string>
+    <string name="menu_cerrar_sesion">Cerrar sesión</string>
+    <string name="placeholder_texto">Esta pantalla se construye en los siguientes pasos</string>
+
+    <!-- Usuarios -->
+    <string name="usuarios_vacio">No hay usuarios registrados</string>
+    <string name="btn_nuevo_usuario">Nuevo usuario</string>
+    <string name="btn_editar">Editar</string>
+    <string name="btn_eliminar">Eliminar</string>
+    <string name="btn_guardar">Guardar</string>
+    <string name="btn_cancelar">Cancelar</string>
+    <string name="item_documento">Doc. %1$s</string>
+    <string name="item_telefono">Tel. %1$s</string>
+    <string name="usuario_form_titulo_crear">Nuevo usuario</string>
+    <string name="usuario_form_titulo_editar">Editar usuario</string>
+    <string name="hint_rol">Rol</string>
+    <string name="error_rol_vacio">Selecciona un rol</string>
+    <string name="usuario_guardado">Usuario guardado</string>
+    <string name="usuario_eliminado">Usuario eliminado</string>
+    <string name="eliminar_usuario_titulo">Eliminar usuario</string>
+    <string name="eliminar_usuario_mensaje">¿Seguro que deseas eliminar a %1$s?</string>
+
+    <string-array name="roles">
+        <item>ADMIN</item>
+        <item>MEDICO</item>
+        <item>PACIENTE</item>
+    </string-array>
+
+    <!-- Inventario -->
+    <string name="inventario_vacio">No hay medicamentos en el inventario</string>
+    <string name="btn_nuevo_medicamento">Nuevo medicamento</string>
+    <string name="item_cantidad">Cantidad: %1$d</string>
+    <string name="item_vencimiento">Vence: %1$s</string>
+    <string name="stock_bajo">Stock bajo</string>
+    <string name="medicamento_form_titulo_crear">Nuevo medicamento</string>
+    <string name="medicamento_form_titulo_editar">Editar medicamento</string>
+    <string name="hint_medicamento_nombre">Nombre del medicamento</string>
+    <string name="hint_descripcion">Descripción (opcional)</string>
+    <string name="hint_cantidad">Cantidad disponible</string>
+    <string name="hint_vencimiento">Fecha de vencimiento</string>
+    <string name="fecha_picker_titulo">Selecciona la fecha de vencimiento</string>
+    <string name="error_medicamento_nombre_vacio">Ingresa el nombre del medicamento</string>
+    <string name="error_cantidad_vacia">Ingresa la cantidad</string>
+    <string name="error_cantidad_invalida">La cantidad debe ser un número entero mayor o igual a 0</string>
+    <string name="error_vencimiento_vacio">Selecciona la fecha de vencimiento</string>
+    <string name="medicamento_guardado">Medicamento guardado</string>
+    <string name="medicamento_eliminado">Medicamento eliminado</string>
+    <string name="eliminar_medicamento_titulo">Eliminar medicamento</string>
+    <string name="eliminar_medicamento_mensaje">¿Seguro que deseas eliminar %1$s del inventario?</string>
+
+    <!-- Citas -->
+    <string name="citas_vacio">No hay citas programadas</string>
+    <string name="btn_nueva_cita">Nueva cita</string>
+    <string name="btn_reprogramar">Reprogramar</string>
+    <string name="btn_cancelar_cita">Cancelar cita</string>
+    <string name="btn_volver">Volver</string>
+    <string name="estado_programada">Programada</string>
+    <string name="estado_cancelada">Cancelada</string>
+    <string name="item_medico">Médico: %1$s</string>
+    <string name="item_fecha_hora">%1$s · %2$s</string>
+    <string name="item_motivo">Motivo: %1$s</string>
+    <string name="cita_form_titulo_crear">Nueva cita</string>
+    <string name="cita_form_titulo_editar">Reprogramar cita</string>
+    <string name="hint_paciente">Paciente</string>
+    <string name="hint_medico">Médico</string>
+    <string name="hint_motivo">Motivo de la consulta</string>
+    <string name="hint_fecha_cita">Fecha</string>
+    <string name="hint_hora_cita">Hora</string>
+    <string name="fecha_cita_picker_titulo">Selecciona la fecha de la cita</string>
+    <string name="hora_picker_titulo">Selecciona la hora de la cita</string>
+    <string name="error_paciente_vacio">Ingresa el nombre del paciente</string>
+    <string name="error_medico_vacio">Ingresa el nombre del médico</string>
+    <string name="error_motivo_vacio">Ingresa el motivo de la consulta</string>
+    <string name="error_fecha_cita_vacia">Selecciona la fecha</string>
+    <string name="error_hora_cita_vacia">Selecciona la hora</string>
+    <string name="error_cita_pasada">La fecha y la hora ya pasaron</string>
+    <string name="cita_guardada">Cita guardada</string>
+    <string name="cita_cancelada">Cita cancelada</string>
+    <string name="cancelar_cita_titulo">Cancelar cita</string>
+    <string name="cancelar_cita_mensaje">¿Seguro que deseas cancelar la cita de %1$s?</string>
+
+    <!-- Notificaciones -->
+    <string name="canal_nombre">Recordatorios de citas</string>
+    <string name="canal_descripcion">Avisos antes de tus citas médicas</string>
+    <string name="notif_titulo">Recordatorio de cita</string>
+    <string name="notif_texto">Tienes cita con %1$s a las %2$s</string>
+    <string name="recordatorio_programado">Recordatorio programado</string>
+    <string name="recordatorio_no_programado">Faltan pocos minutos para la cita, no se programó recordatorio</string>
+
+    <!-- Puntos de atención -->
+    <string name="hint_punto_atencion">Punto de atención</string>
+    <string name="error_punto_vacio">Selecciona un punto de atención</string>
+    <string name="item_punto">Lugar: %1$s, %2$s</string>
+    <string name="btn_ver_mapa">Ver mapa</string>
+    <string name="sin_app_mapas">No hay una aplicación de mapas instalada</string>
+
+    <!-- Ubicación del dispositivo (GPS) -->
+    <string name="btn_sede_cercana">Sugerir la sede más cercana</string>
+    <string name="btn_como_llegar">Cómo llegar</string>
+    <string name="ubicacion_obteniendo">Obteniendo tu ubicación…</string>
+    <string name="ubicacion_permiso_denegado">Sin el permiso de ubicación no se puede calcular la distancia</string>
+    <string name="ubicacion_no_disponible">No se pudo obtener tu ubicación. Activa el GPS e inténtalo de nuevo</string>
+    <string name="sede_cercana_elegida">Sede más cercana: %1$s (a %2$s de ti)</string>
+    <string name="distancia_a_ti">A %1$s de tu ubicación</string>
 </resources>

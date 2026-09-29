@@ -7,6 +7,8 @@ import co.edu.ue.mediturno.models.Usuario;
 
 // librerias de retrofit y listas para peticiones
 import java.util.List;
+
+import co.edu.ue.mediturno.models.puntoAtencion;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
@@ -30,4 +32,8 @@ public interface ApiService {
     // guardar una cita nueva
     @POST("api/citas")
     Call<Cita> crearCita(@Body Cita nuevaCita);
+
+    // trae punto de atencion
+    @GET("api/puntos-atencion")
+    Call<List<puntoAtencion>> obtenerPuntosAtencion();
 }
