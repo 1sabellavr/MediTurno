@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "423069594375",
+    "project_id": "medturn-69e17",
+    "storage_bucket": "medturn-69e17.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:423069594375:android:1c3458497c23135116cba2",
+        "android_client_info": {
+          "package_name": "co.edu.ue.mediturno"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCK0ssp2-ArMVWJS-1l01cIQ765dCfqVaM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
