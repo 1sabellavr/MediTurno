@@ -19,12 +19,18 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import co.edu.ue.mediturno.R;
 import co.edu.ue.mediturno.adapter.UsuarioAdapter;
+import co.edu.ue.mediturno.api.ApiClient;
+import co.edu.ue.mediturno.api.ApiErrores;
 import co.edu.ue.mediturno.model.Usuario;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class UsuariosFragment extends Fragment implements UsuarioAdapter.OnUsuarioListener {
 
@@ -37,16 +43,14 @@ public class UsuariosFragment extends Fragment implements UsuarioAdapter.OnUsuar
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Cuando el formulario guarda con éxito, se vuelve a pedir la lista a la API.
         formLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
-                    if (result.getResultCode() == Activity.RESULT_OK
-                            && result.getData() != null) {
-                        procesarResultado(result.getData());
+                    if (result.getResultCode() == Activity.RESULT_OK) {
+                        cargarUsuarios();
                     }
                 });
-
-        cargarDatosDePrueba();
     }
 
     @Nullable
@@ -66,61 +70,44 @@ public class UsuariosFragment extends Fragment implements UsuarioAdapter.OnUsuar
         fabNuevo.setOnClickListener(v ->
                 formLauncher.launch(new Intent(requireContext(), UsuarioFormActivity.class)));
 
-        actualizarVacio();
+        cargarUsuarios();
         return vista;
     }
 
-    private void cargarDatosDePrueba() {
-        // TODO-API: GET /usuarios
-        // Recibe: lista de Usuario (id, nombre, documento, teléfono, correo y rol).
-        // Reemplazar estos datos de prueba por la respuesta de la API.
-        usuarios.add(new Usuario(1, "Laura Gómez", "1012345678", "3001234567",
-                "laura.gomez@correo.com", "ADMIN"));
-        usuarios.add(new Usuario(2, "Carlos Pérez", "80123456", "3109876543",
-                "carlos.perez@correo.com", "MEDICO"));
-        usuarios.add(new Usuario(3, "María Rodríguez", "52987654", "3205551122",
-                "maria.rodriguez@correo.com", "PACIENTE"));
+    // GET /api/usuarios
+    private void cargarUsuarios() {
+        ApiClient.getApiService().obtenerUsuarios().enqueue(new Callback<List<Usuario>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<Usuario>> call,
+                                   @NonNull Response<List<Usuario>> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null) {
+                    usuarios.clear();
+                    usuarios.addAll(response.body());
+                    adapter.notifyDataSetChanged();
+                    actualizarVacio();
+                } else {
+                    mostrarMensaje(ApiErrores.mensaje(requireContext(), response));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<Usuario>> call, @NonNull Throwable t) {
+                if (isAdded()) {
+                    mostrarMensaje(getString(R.string.error_conexion));
+                }
+            }
+        });
     }
 
     private void actualizarVacio() {
         tvVacio.setVisibility(usuarios.isEmpty() ? View.VISIBLE : View.GONE);
     }
 
-    private void procesarResultado(Intent data) {
-        int id = data.getIntExtra(UsuarioFormActivity.EXTRA_ID, 0);
-        String nombre = data.getStringExtra(UsuarioFormActivity.EXTRA_NOMBRE);
-        String documento = data.getStringExtra(UsuarioFormActivity.EXTRA_DOCUMENTO);
-        String telefono = data.getStringExtra(UsuarioFormActivity.EXTRA_TELEFONO);
-        String correo = data.getStringExtra(UsuarioFormActivity.EXTRA_CORREO);
-        String rol = data.getStringExtra(UsuarioFormActivity.EXTRA_ROL);
-
-        if (id == 0) {
-            usuarios.add(new Usuario(siguienteId(), nombre, documento, telefono, correo, rol));
-        } else {
-            for (Usuario usuario : usuarios) {
-                if (usuario.getId() == id) {
-                    usuario.setNombre(nombre);
-                    usuario.setDocumento(documento);
-                    usuario.setTelefono(telefono);
-                    usuario.setCorreo(correo);
-                    usuario.setRol(rol);
-                    break;
-                }
-            }
-        }
-
-        adapter.notifyDataSetChanged();
-        actualizarVacio();
-    }
-
-    private int siguienteId() {
-        int maximo = 0;
-        for (Usuario usuario : usuarios) {
-            if (usuario.getId() > maximo) {
-                maximo = usuario.getId();
-            }
-        }
-        return maximo + 1;
+    private void mostrarMensaje(String mensaje) {
+        Toast.makeText(requireContext(), mensaje, Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -141,16 +128,37 @@ public class UsuariosFragment extends Fragment implements UsuarioAdapter.OnUsuar
                 .setTitle(R.string.eliminar_usuario_titulo)
                 .setMessage(getString(R.string.eliminar_usuario_mensaje, usuario.getNombre()))
                 .setNegativeButton(R.string.btn_cancelar, null)
-                .setPositiveButton(R.string.btn_eliminar, (dialog, which) -> {
-                    // TODO-API: DELETE /usuarios/{id}
-                    // Envía: id del usuario. Recibe: confirmación de eliminación.
-                    // Quitar el usuario de la lista solo cuando la API confirme.
-                    usuarios.remove(usuario);
-                    adapter.notifyDataSetChanged();
-                    actualizarVacio();
-                    Toast.makeText(requireContext(), R.string.usuario_eliminado,
-                            Toast.LENGTH_SHORT).show();
-                })
+                .setPositiveButton(R.string.btn_eliminar,
+                        (dialog, which) -> eliminarUsuario(usuario))
                 .show();
+    }
+
+    // DELETE /api/usuarios/{id}
+    private void eliminarUsuario(Usuario usuario) {
+        ApiClient.getApiService().eliminarUsuario(usuario.getId())
+                .enqueue(new Callback<Void>() {
+                    @Override
+                    public void onResponse(@NonNull Call<Void> call,
+                                           @NonNull Response<Void> response) {
+                        if (!isAdded()) {
+                            return;
+                        }
+                        if (response.isSuccessful()) {
+                            usuarios.remove(usuario);
+                            adapter.notifyDataSetChanged();
+                            actualizarVacio();
+                            mostrarMensaje(getString(R.string.usuario_eliminado));
+                        } else {
+                            mostrarMensaje(ApiErrores.mensaje(requireContext(), response));
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                        if (isAdded()) {
+                            mostrarMensaje(getString(R.string.error_conexion));
+                        }
+                    }
+                });
     }
 }

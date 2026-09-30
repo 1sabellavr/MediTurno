@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="error_conexion">No se pudo conectar con el servidor. Revisa que la API esté encendida y que estés en la misma red</string>
+    <string name="error_servidor">El servidor respondió con un error (código %1$d)</string>
+    <string name="sin_perfil">Tu cuenta no tiene un perfil en el sistema. Pide al administrador que te agregue</string>
+    <string name="cuenta_vinculada">La cuenta de acceso ya existía; se creó su perfil con el rol elegido</string>
+</resources>

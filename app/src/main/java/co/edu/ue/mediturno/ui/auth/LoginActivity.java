@@ -6,21 +6,25 @@ import android.util.Patterns;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import co.edu.ue.mediturno.MainActivity;
 import co.edu.ue.mediturno.R;
+import co.edu.ue.mediturno.api.ApiClient;
+import co.edu.ue.mediturno.api.ApiErrores;
+import co.edu.ue.mediturno.model.Usuario;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class LoginActivity extends AppCompatActivity {
-
-    // Rol temporal mientras la API no entregue el rol real del usuario.
-    // Para probar cada rol: MainActivity.ROL_ADMIN, ROL_MEDICO o ROL_PACIENTE.
-    // TODO-API: quitar esta constante y usar el rol que devuelva la API.
-    private static final String ROL_TEMPORAL = MainActivity.ROL_ADMIN;
 
     private TextInputLayout tilCorreo;
     private TextInputLayout tilContrasena;
@@ -37,14 +41,14 @@ public class LoginActivity extends AppCompatActivity {
         // Inicializar Firebase Auth
         mAuth = FirebaseAuth.getInstance();
 
-        // Verificar si el usuario ya está autenticado
-        if (mAuth.getCurrentUser() != null) {
-            irAPantallaPrincipal(obtenerRol());
-            return;
-        }
-
         inicializarVistas();
         configurarEventos();
+
+        // Si ya hay una sesión iniciada, se consulta el rol y se entra directo.
+        FirebaseUser actual = mAuth.getCurrentUser();
+        if (actual != null && actual.getEmail() != null) {
+            consultarRolYEntrar(actual.getEmail());
+        }
     }
 
     private void inicializarVistas() {
@@ -70,13 +74,17 @@ public class LoginActivity extends AppCompatActivity {
         if (!validarCampos(correo, contrasena)) {
             return;
         }
-        // Iniciar sesión con Firebase Auth
+
+        btnIngresar.setEnabled(false);
+
+        // 1. Iniciar sesión con Firebase Auth (correo y contraseña)
         mAuth.signInWithEmailAndPassword(correo, contrasena)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
-                        // Autenticación exitosa
-                        irAPantallaPrincipal(obtenerRol());
+                        // 2. Autenticación exitosa: se pide el rol a la API
+                        consultarRolYEntrar(correo);
                     } else {
+                        btnIngresar.setEnabled(true);
                         String mensajeError = task.getException() != null ?
                                 task.getException().getLocalizedMessage() : "Credenciales inválidas";
                         Toast.makeText(LoginActivity.this, "Error de inicio de sesión: " + mensajeError, Toast.LENGTH_LONG).show();
@@ -84,10 +92,40 @@ public class LoginActivity extends AppCompatActivity {
                 });
     }
 
-    private String obtenerRol() {
-        // TODO-API: pedir a la API el rol del usuario según su correo
-        // (FirebaseAuth.getInstance().getCurrentUser().getEmail()) y devolverlo aquí.
-        return ROL_TEMPORAL;
+    // GET /api/usuarios/por-correo?correo=...
+    private void consultarRolYEntrar(String correo) {
+        btnIngresar.setEnabled(false);
+
+        ApiClient.getApiService().obtenerUsuarioPorCorreo(correo).enqueue(new Callback<Usuario>() {
+            @Override
+            public void onResponse(@NonNull Call<Usuario> call, @NonNull Response<Usuario> response) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null) {
+                    String rol = response.body().getRol();
+                    irAPantallaPrincipal(rol != null ? rol : MainActivity.ROL_PACIENTE);
+                } else if (response.code() == 404) {
+                    // La cuenta existe en Firebase pero no tiene perfil en el sistema.
+                    mAuth.signOut();
+                    btnIngresar.setEnabled(true);
+                    Toast.makeText(LoginActivity.this, R.string.sin_perfil, Toast.LENGTH_LONG).show();
+                } else {
+                    btnIngresar.setEnabled(true);
+                    Toast.makeText(LoginActivity.this,
+                            ApiErrores.mensaje(LoginActivity.this, response), Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Usuario> call, @NonNull Throwable t) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                btnIngresar.setEnabled(true);
+                Toast.makeText(LoginActivity.this, R.string.error_conexion, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private boolean validarCampos(String correo, String contrasena) {

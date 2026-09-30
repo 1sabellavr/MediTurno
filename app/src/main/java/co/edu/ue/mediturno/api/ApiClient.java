@@ -15,7 +15,7 @@ public class ApiClient {
     // Dirección de la API. Cambiar según dónde se pruebe:
     // - Emulador de Android Studio: "http://10.0.2.2:8080/"
     // - Teléfono real (misma red Wi-Fi): "http://IP_DEL_PC:8080/"  (la IP sale de ipconfig)
-    private static final String BASE_URL = "http://192.168.1.15:8080/";
+    private static final String BASE_URL = "http://10.57.30.113:8080/";
 
     private static Retrofit retrofit = null;
 

@@ -5,15 +5,26 @@ import android.util.Patterns;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import co.edu.ue.mediturno.MainActivity;
 import co.edu.ue.mediturno.R;
+import co.edu.ue.mediturno.api.ApiClient;
+import co.edu.ue.mediturno.api.ApiErrores;
+import co.edu.ue.mediturno.model.Usuario;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
+
+import java.util.Locale;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class RegistroActivity extends AppCompatActivity {
 
@@ -74,14 +85,17 @@ public class RegistroActivity extends AppCompatActivity {
         String nombre = texto(etNombre);
         String documento = texto(etDocumento);
         String telefono = texto(etTelefono);
-        String correo = texto(etCorreo);
+        String correo = texto(etCorreo).toLowerCase(Locale.ROOT);
         String contrasena = etContrasena.getText() != null ? etContrasena.getText().toString() : "";
         String confirmar = etConfirmar.getText() != null ? etConfirmar.getText().toString() : "";
 
         if (!validarCampos(nombre, documento, telefono, correo, contrasena, confirmar)) {
             return;
         }
-        // Crear usuario en Firebase Auth
+
+        btnRegistrar.setEnabled(false);
+
+        // 1. Crear la cuenta de acceso en Firebase Auth
         mAuth.createUserWithEmailAndPassword(correo, contrasena)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
@@ -94,14 +108,64 @@ public class RegistroActivity extends AppCompatActivity {
                             user.updateProfile(profileUpdates);
                         }
 
-                        Toast.makeText(RegistroActivity.this, R.string.registro_exitoso, Toast.LENGTH_SHORT).show();
-                        finish(); // Regresa a LoginActivity
+                        // 2. Guardar el perfil en la API con el rol por defecto (paciente)
+                        crearPerfilEnApi(new Usuario(0, nombre, documento, telefono, correo,
+                                MainActivity.ROL_PACIENTE));
                     } else {
+                        btnRegistrar.setEnabled(true);
                         String mensajeError = task.getException() != null ?
                                 task.getException().getLocalizedMessage() : "Error al registrar usuario";
                         Toast.makeText(RegistroActivity.this, "Error: " + mensajeError, Toast.LENGTH_LONG).show();
                     }
                 });
+    }
+
+    // POST /api/usuarios
+    private void crearPerfilEnApi(Usuario perfil) {
+        ApiClient.getApiService().crearUsuario(perfil).enqueue(new Callback<Usuario>() {
+            @Override
+            public void onResponse(@NonNull Call<Usuario> call, @NonNull Response<Usuario> response) {
+                if (response.isSuccessful()) {
+                    // Se cierra la sesión para que el usuario inicie sesión desde el Login.
+                    mAuth.signOut();
+                    if (isFinishing() || isDestroyed()) {
+                        return;
+                    }
+                    Toast.makeText(RegistroActivity.this, R.string.registro_exitoso, Toast.LENGTH_SHORT).show();
+                    finish(); // Regresa a LoginActivity
+                } else {
+                    revertirCuenta();
+                    if (isFinishing() || isDestroyed()) {
+                        return;
+                    }
+                    Toast.makeText(RegistroActivity.this,
+                            ApiErrores.mensaje(RegistroActivity.this, response), Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Usuario> call, @NonNull Throwable t) {
+                revertirCuenta();
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                Toast.makeText(RegistroActivity.this, R.string.error_conexion, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    // Si la API no pudo guardar el perfil, se borra la cuenta recién creada en Firebase
+    // para no dejarla a medias.
+    private void revertirCuenta() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null) {
+            user.delete().addOnCompleteListener(tarea -> mAuth.signOut());
+        } else {
+            mAuth.signOut();
+        }
+        if (!isFinishing() && !isDestroyed()) {
+            btnRegistrar.setEnabled(true);
+        }
     }
 
     private boolean validarCampos(String nombre, String documento, String telefono,
