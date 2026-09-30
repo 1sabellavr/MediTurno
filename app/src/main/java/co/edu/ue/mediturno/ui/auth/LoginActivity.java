@@ -14,9 +14,13 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 
 public class LoginActivity extends AppCompatActivity {
+
+    // Rol temporal mientras la API no entregue el rol real del usuario.
+    // Para probar cada rol: MainActivity.ROL_ADMIN, ROL_MEDICO o ROL_PACIENTE.
+    // TODO-API: quitar esta constante y usar el rol que devuelva la API.
+    private static final String ROL_TEMPORAL = MainActivity.ROL_ADMIN;
 
     private TextInputLayout tilCorreo;
     private TextInputLayout tilContrasena;
@@ -31,11 +35,11 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         // Inicializar Firebase Auth
-        mAuth = FirebaseAuth.getInstance(); // Inicializar Firebase Auth
+        mAuth = FirebaseAuth.getInstance();
 
         // Verificar si el usuario ya está autenticado
         if (mAuth.getCurrentUser() != null) {
-            irAPantallaPrincipal("PACIENTE");
+            irAPantallaPrincipal(obtenerRol());
             return;
         }
 
@@ -70,15 +74,20 @@ public class LoginActivity extends AppCompatActivity {
         mAuth.signInWithEmailAndPassword(correo, contrasena)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
-                        FirebaseUser user = mAuth.getCurrentUser();
                         // Autenticación exitosa
-                        irAPantallaPrincipal("PACIENTE");
+                        irAPantallaPrincipal(obtenerRol());
                     } else {
                         String mensajeError = task.getException() != null ?
                                 task.getException().getLocalizedMessage() : "Credenciales inválidas";
                         Toast.makeText(LoginActivity.this, "Error de inicio de sesión: " + mensajeError, Toast.LENGTH_LONG).show();
                     }
                 });
+    }
+
+    private String obtenerRol() {
+        // TODO-API: pedir a la API el rol del usuario según su correo
+        // (FirebaseAuth.getInstance().getCurrentUser().getEmail()) y devolverlo aquí.
+        return ROL_TEMPORAL;
     }
 
     private boolean validarCampos(String correo, String contrasena) {

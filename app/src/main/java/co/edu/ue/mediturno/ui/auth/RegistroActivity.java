@@ -102,9 +102,6 @@ public class RegistroActivity extends AppCompatActivity {
                         Toast.makeText(RegistroActivity.this, "Error: " + mensajeError, Toast.LENGTH_LONG).show();
                     }
                 });
-
-        Toast.makeText(this, R.string.registro_exitoso, Toast.LENGTH_LONG).show();
-        finish();
     }
 
     private boolean validarCampos(String nombre, String documento, String telefono,

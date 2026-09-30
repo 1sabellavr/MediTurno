@@ -22,8 +22,14 @@ import co.edu.ue.mediturno.ui.usuarios.UsuariosFragment;
 import co.edu.ue.mediturno.util.NotificacionHelper;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends AppCompatActivity {
+
+    // Roles del sistema (deben escribirse igual que en la API).
+    public static final String ROL_ADMIN = "ADMIN";
+    public static final String ROL_MEDICO = "MEDICO";
+    public static final String ROL_PACIENTE = "PACIENTE";
 
     private MaterialToolbar toolbar;
     private BottomNavigationView bottomNav;
@@ -72,20 +78,30 @@ public class MainActivity extends AppCompatActivity {
                 cerrarSesion();
                 return true;
             }
+            if (item.getItemId() == R.id.action_mapa) {
+                startActivity(new Intent(this, MapsActivity.class));
+                return true;
+            }
             return false;
         });
     }
 
+    /**
+     * Define qué módulos ve cada rol:
+     * - ADMIN: Usuarios, Inventario y Citas.
+     * - MEDICO: Inventario y Citas.
+     * - PACIENTE (y cualquier otro rol): solo Citas.
+     */
     private void configurarMenuPorRol() {
-        // TODO-API: ajustar qué módulos ve cada rol según los roles que devuelva la API.
-        // Regla provisional: ADMIN ve todo y cualquier otro rol solo ve Citas.
-        boolean esAdmin = "ADMIN".equalsIgnoreCase(rol);
+        boolean esAdmin = ROL_ADMIN.equalsIgnoreCase(rol);
+        boolean esMedico = ROL_MEDICO.equalsIgnoreCase(rol);
 
         Menu menu = bottomNav.getMenu();
         menu.findItem(R.id.nav_usuarios).setVisible(esAdmin);
-        menu.findItem(R.id.nav_inventario).setVisible(esAdmin);
+        menu.findItem(R.id.nav_inventario).setVisible(esAdmin || esMedico);
         menu.findItem(R.id.nav_citas).setVisible(true);
 
+        // Con un solo módulo visible no hace falta la barra inferior.
         if (contarItemsVisibles() <= 1) {
             bottomNav.setVisibility(View.GONE);
         }
@@ -155,7 +171,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void cerrarSesion() {
-        // TODO: borrar el token y el rol guardados cuando exista el manejo de sesión.
+        // Cierra la sesión de Firebase; si no, el Login lo reenvía a la pantalla principal.
+        FirebaseAuth.getInstance().signOut();
         Intent intent = new Intent(this, LoginActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
