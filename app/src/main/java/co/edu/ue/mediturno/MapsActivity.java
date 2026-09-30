@@ -27,7 +27,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import java.util.List;
 
 import co.edu.ue.mediturno.api.ApiClient;
-import co.edu.ue.mediturno.models.puntoAtencion;
+import co.edu.ue.mediturno.model.PuntoAtencion;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -72,11 +72,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void cargarPuntosAtencion() {
-        ApiClient.getApiService().obtenerPuntosAtencion().enqueue(new Callback<List<puntoAtencion>>() {
+        ApiClient.getApiService().obtenerPuntosAtencion().enqueue(new Callback<List<PuntoAtencion>>() {
             @Override
-            public void onResponse(Call<List<puntoAtencion>> call, Response<List<puntoAtencion>> response) {
+            public void onResponse(Call<List<PuntoAtencion>> call, Response<List<PuntoAtencion>> response) {
                 if (!response.isSuccessful() || response.body() == null) return;
-                for (puntoAtencion p : response.body()) {
+                for (PuntoAtencion p : response.body()) {
                     LatLng pos = new LatLng(p.getLatitud(), p.getLongitud());
                     mMap.addMarker(new MarkerOptions()
                             .position(pos)
@@ -86,7 +86,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
 
             @Override
-            public void onFailure(Call<List<puntoAtencion>> call, Throwable t) {
+            public void onFailure(Call<List<PuntoAtencion>> call, Throwable t) {
                 Toast.makeText(MapsActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
