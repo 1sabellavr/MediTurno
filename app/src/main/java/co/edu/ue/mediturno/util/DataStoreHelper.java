@@ -23,6 +23,7 @@ public class DataStoreHelper {
     // Definición de Claves para DataStore
     private static final Preferences.Key<String> KEY_TOKEN_SESION = PreferencesKeys.stringKey("token_sesion");
     private static final Preferences.Key<String> KEY_EMAIL_USUARIO = PreferencesKeys.stringKey("email_usuario");
+    private static final Preferences.Key<String> KEY_ULTIMO_CORREO = PreferencesKeys.stringKey("ultimo_correo");
 
     // Instancia Singleton de DataStore
     public static synchronized RxDataStore<Preferences> getInstance(Context context) {
@@ -54,6 +55,27 @@ public class DataStoreHelper {
         return getInstance(context).data().map(prefs -> {
             String token = prefs.get(KEY_TOKEN_SESION);
             return token != null ? token : "";
+        });
+    }
+
+    /**
+     * Guardar el último correo con el que se inició sesión (para prellenarlo en el Login).
+     */
+    public static void guardarUltimoCorreo(Context context, String email) {
+        getInstance(context).updateDataAsync(prefs -> {
+            MutablePreferences mutablePreferences = prefs.toMutablePreferences();
+            mutablePreferences.set(KEY_ULTIMO_CORREO, email);
+            return Single.just(mutablePreferences);
+        });
+    }
+
+    /**
+     * Obtener el último correo usado ("" si aún no hay ninguno).
+     */
+    public static Flowable<String> obtenerUltimoCorreo(Context context) {
+        return getInstance(context).data().map(prefs -> {
+            String email = prefs.get(KEY_ULTIMO_CORREO);
+            return email != null ? email : "";
         });
     }
 

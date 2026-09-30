@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -21,6 +22,7 @@ import co.edu.ue.mediturno.ui.inventario.InventarioFragment;
 import co.edu.ue.mediturno.ui.tratamiento.TratamientoFragment;
 import co.edu.ue.mediturno.ui.usuarios.UsuariosFragment;
 import co.edu.ue.mediturno.util.NotificacionHelper;
+import co.edu.ue.mediturno.util.PreferenciasHelper;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
@@ -74,7 +76,22 @@ public class MainActivity extends AppCompatActivity {
 
     private void configurarToolbar() {
         toolbar.inflateMenu(R.menu.menu_toolbar);
+
+        // SharedPreferences: estado guardado del interruptor de recordatorios de citas.
+        MenuItem itemRecordatorios = toolbar.getMenu().findItem(R.id.action_recordatorios);
+        itemRecordatorios.setChecked(PreferenciasHelper.obtenerNotificacionesActivas(this));
+
         toolbar.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == R.id.action_recordatorios) {
+                boolean activar = !item.isChecked();
+                item.setChecked(activar);
+                PreferenciasHelper.guardarNotificacionesActivas(this, activar);
+                Toast.makeText(this,
+                        activar ? R.string.recordatorios_activados
+                                : R.string.recordatorios_desactivados,
+                        Toast.LENGTH_SHORT).show();
+                return true;
+            }
             if (item.getItemId() == R.id.action_cerrar_sesion) {
                 cerrarSesion();
                 return true;

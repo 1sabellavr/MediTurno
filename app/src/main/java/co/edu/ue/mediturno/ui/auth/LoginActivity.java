@@ -14,11 +14,14 @@ import co.edu.ue.mediturno.R;
 import co.edu.ue.mediturno.api.ApiClient;
 import co.edu.ue.mediturno.api.ApiErrores;
 import co.edu.ue.mediturno.model.Usuario;
+import co.edu.ue.mediturno.util.DataStoreHelper;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -47,6 +50,7 @@ public class LoginActivity extends AppCompatActivity {
 
         inicializarVistas();
         configurarEventos();
+        prellenarUltimoCorreo();
 
         // Si ya hay una sesión iniciada, se consulta el rol y se entra directo.
         FirebaseUser actual = mAuth.getCurrentUser();
@@ -62,6 +66,22 @@ public class LoginActivity extends AppCompatActivity {
         etContrasena = findViewById(R.id.etContrasena);
         btnIngresar = findViewById(R.id.btnIngresar);
         tvRegistro = findViewById(R.id.tvRegistro);
+    }
+
+    // DataStore: si ya se inició sesión antes, se deja escrito el último correo usado.
+    private void prellenarUltimoCorreo() {
+        DataStoreHelper.obtenerUltimoCorreo(this)
+                .firstOrError()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(correo -> {
+                    boolean campoVacio = etCorreo.getText() == null
+                            || etCorreo.getText().length() == 0;
+                    if (!correo.isEmpty() && campoVacio) {
+                        etCorreo.setText(correo);
+                    }
+                }, error -> {
+                    // Si no se puede leer, el campo queda vacío.
+                });
     }
 
     private void configurarEventos() {
@@ -85,6 +105,8 @@ public class LoginActivity extends AppCompatActivity {
         mAuth.signInWithEmailAndPassword(correo, contrasena)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
+                        // DataStore: se recuerda el correo para la próxima vez
+                        DataStoreHelper.guardarUltimoCorreo(getApplicationContext(), correo);
                         // 2. Autenticación exitosa: se pide el rol a la API
                         consultarRolYEntrar(correo);
                     } else {

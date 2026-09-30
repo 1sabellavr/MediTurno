@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- SharedPreferences: recordatorios de citas -->
+    <string name="menu_recordatorios">Recordatorios de citas</string>
+    <string name="recordatorios_activados">Recordatorios de citas activados</string>
+    <string name="recordatorios_desactivados">Recordatorios de citas desactivados</string>
+
+    <!-- Archivos: exportar Mi tratamiento -->
+    <string name="btn_exportar">Exportar a archivo</string>
+    <string name="exportar_titulo">Tratamiento exportado</string>
+    <string name="exportar_encabezado">Mi tratamiento - MediTurno</string>
+    <string name="exportar_usuario">Usuario: %1$s</string>
+    <string name="exportar_fecha">Exportado el %1$s</string>
+    <string name="btn_compartir">Compartir</string>
+    <string name="btn_cerrar">Cerrar</string>
+    <string name="compartir_titulo">Compartir mi tratamiento</string>
+    <string name="error_exportar">No se pudo guardar el archivo</string>
+</resources>

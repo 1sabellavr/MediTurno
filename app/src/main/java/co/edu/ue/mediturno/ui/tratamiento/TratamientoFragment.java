@@ -21,13 +21,18 @@ import co.edu.ue.mediturno.R;
 import co.edu.ue.mediturno.adapter.TratamientoAdapter;
 import co.edu.ue.mediturno.model.Tratamiento;
 import co.edu.ue.mediturno.repository.TratamientoRepository;
+import co.edu.ue.mediturno.util.ArchivoHelper;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 // "Mi tratamiento": CRUD local sobre SQLite. No usa la API; cada usuario ve solo lo suyo.
 public class TratamientoFragment extends Fragment
@@ -76,6 +81,9 @@ public class TratamientoFragment extends Fragment
         fabNuevo.setOnClickListener(v -> formLauncher.launch(
                 new Intent(requireContext(), TratamientoFormActivity.class)));
 
+        MaterialButton btnExportar = vista.findViewById(R.id.btnExportar);
+        btnExportar.setOnClickListener(v -> exportarTratamiento());
+
         cargarTratamientos();
         return vista;
     }
@@ -86,6 +94,65 @@ public class TratamientoFragment extends Fragment
         tratamientos.addAll(repositorio.obtenerPorUsuario(usuario));
         adapter.notifyDataSetChanged();
         tvVacio.setVisibility(tratamientos.isEmpty() ? View.VISIBLE : View.GONE);
+    }
+
+    // ARCHIVOS: se guarda el tratamiento en un archivo de texto de la memoria del teléfono,
+    // se vuelve a leer el archivo y se ofrece compartirlo.
+    private void exportarTratamiento() {
+        if (tratamientos.isEmpty()) {
+            Toast.makeText(requireContext(), R.string.tratamiento_vacio,
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String fecha = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.US).format(new Date());
+
+        StringBuilder contenido = new StringBuilder();
+        contenido.append(getString(R.string.exportar_encabezado)).append("\n");
+        contenido.append(getString(R.string.exportar_usuario, usuario)).append("\n");
+        contenido.append(getString(R.string.exportar_fecha, fecha)).append("\n\n");
+
+        int numero = 1;
+        for (Tratamiento tratamiento : tratamientos) {
+            contenido.append(numero++).append(". ")
+                    .append(tratamiento.getMedicamento()).append(" | ")
+                    .append(getString(R.string.item_dosis, tratamiento.getDosis())).append(" | ")
+                    .append(getString(R.string.item_hora_toma, tratamiento.getHora()))
+                    .append("\n");
+            String notas = tratamiento.getNotas();
+            if (notas != null && !notas.isEmpty()) {
+                contenido.append("   ").append(notas).append("\n");
+            }
+        }
+
+        String nombreArchivo = usuario.isEmpty()
+                ? "tratamiento.txt"
+                : "tratamiento_" + usuario.replaceAll("[^A-Za-z0-9]", "_") + ".txt";
+
+        // Escribir el archivo
+        boolean guardado = ArchivoHelper.guardarComprobante(
+                requireContext(), nombreArchivo, contenido.toString());
+        if (!guardado) {
+            Toast.makeText(requireContext(), R.string.error_exportar,
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // Leer el archivo guardado
+        String leido = ArchivoHelper.leerComprobante(requireContext(), nombreArchivo);
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.exportar_titulo)
+                .setMessage(leido)
+                .setNegativeButton(R.string.btn_cerrar, null)
+                .setPositiveButton(R.string.btn_compartir, (dialog, which) -> {
+                    Intent enviar = new Intent(Intent.ACTION_SEND);
+                    enviar.setType("text/plain");
+                    enviar.putExtra(Intent.EXTRA_TEXT, leido);
+                    startActivity(Intent.createChooser(enviar,
+                            getString(R.string.compartir_titulo)));
+                })
+                .show();
     }
 
     @Override

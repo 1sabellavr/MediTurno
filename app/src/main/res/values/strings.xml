@@ -124,7 +124,7 @@
     <string name="notif_titulo">Recordatorio de cita</string>
     <string name="notif_texto">Tienes cita con %1$s a las %2$s</string>
     <string name="recordatorio_programado">Recordatorio programado</string>
-    <string name="recordatorio_no_programado">Faltan pocos minutos para la cita, no se programó recordatorio</string>
+    <string name="recordatorio_no_programado">No se programó el recordatorio: la cita es en menos de una hora o los recordatorios están desactivados</string>
 
     <!-- Puntos de atención -->
     <string name="hint_punto_atencion">Punto de atención</string>
