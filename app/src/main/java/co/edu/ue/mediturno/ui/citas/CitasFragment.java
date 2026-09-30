@@ -21,12 +21,14 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import co.edu.ue.mediturno.MainActivity;
 import co.edu.ue.mediturno.R;
 import co.edu.ue.mediturno.adapter.CitaAdapter;
 import co.edu.ue.mediturno.api.ApiClient;
 import co.edu.ue.mediturno.api.ApiErrores;
 import co.edu.ue.mediturno.model.Cita;
 import co.edu.ue.mediturno.model.PuntoAtencion;
+import co.edu.ue.mediturno.ui.auth.LoginActivity;
 import co.edu.ue.mediturno.util.NotificacionHelper;
 import co.edu.ue.mediturno.util.UbicacionHelper;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -51,9 +53,21 @@ public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListene
     private ActivityResultLauncher<Intent> formLauncher;
     private ActivityResultLauncher<String[]> permisoUbicacion;
 
+    // Datos de quien inició sesión (vienen del Login a través de MainActivity).
+    private String rol = "";
+    private int usuarioId;
+    private String usuarioNombre = "";
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Intent intentSesion = requireActivity().getIntent();
+        String rolRecibido = intentSesion.getStringExtra("rol");
+        rol = rolRecibido != null ? rolRecibido : "";
+        usuarioId = intentSesion.getIntExtra(LoginActivity.EXTRA_USUARIO_ID, 0);
+        String nombreRecibido = intentSesion.getStringExtra(LoginActivity.EXTRA_USUARIO_NOMBRE);
+        usuarioNombre = nombreRecibido != null ? nombreRecibido : "";
 
         formLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -93,8 +107,7 @@ public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListene
         rvCitas.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvCitas.setAdapter(adapter);
 
-        fabNueva.setOnClickListener(v -> formLauncher.launch(
-                new Intent(requireContext(), CitaFormActivity.class)));
+        fabNueva.setOnClickListener(v -> formLauncher.launch(nuevoIntentFormulario()));
 
         cargarCitas();
         return vista;
@@ -140,9 +153,18 @@ public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListene
 
     // ---------- Datos (API) ----------
 
-    // GET /api/citas
+    // GET /api/citas: el paciente ve solo sus citas, el médico su agenda y el admin todas.
     private void cargarCitas() {
-        ApiClient.getApiService().obtenerCitas().enqueue(new Callback<List<Cita>>() {
+        Call<List<Cita>> llamada;
+        if (MainActivity.ROL_PACIENTE.equalsIgnoreCase(rol)) {
+            llamada = ApiClient.getApiService().obtenerCitasDePaciente(usuarioId);
+        } else if (MainActivity.ROL_MEDICO.equalsIgnoreCase(rol)) {
+            llamada = ApiClient.getApiService().obtenerCitasDeMedico(usuarioId);
+        } else {
+            llamada = ApiClient.getApiService().obtenerCitas();
+        }
+
+        llamada.enqueue(new Callback<List<Cita>>() {
             @Override
             public void onResponse(@NonNull Call<List<Cita>> call,
                                    @NonNull Response<List<Cita>> response) {
@@ -178,15 +200,30 @@ public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListene
 
     // ---------- Acciones de cada tarjeta ----------
 
+    // Intent del formulario con los datos de la sesión (para fijar paciente o médico).
+    private Intent nuevoIntentFormulario() {
+        Intent intent = new Intent(requireContext(), CitaFormActivity.class);
+        intent.putExtra(CitaFormActivity.EXTRA_ROL, rol);
+        intent.putExtra(CitaFormActivity.EXTRA_USUARIO_ID, usuarioId);
+        intent.putExtra(CitaFormActivity.EXTRA_USUARIO_NOMBRE, usuarioNombre);
+        return intent;
+    }
+
     @Override
     public void onReprogramar(Cita cita) {
-        Intent intent = new Intent(requireContext(), CitaFormActivity.class);
+        Intent intent = nuevoIntentFormulario();
         intent.putExtra(CitaFormActivity.EXTRA_ID, cita.getId());
         intent.putExtra(CitaFormActivity.EXTRA_PACIENTE, cita.getPaciente());
         intent.putExtra(CitaFormActivity.EXTRA_MEDICO, cita.getMedico());
         intent.putExtra(CitaFormActivity.EXTRA_FECHA, cita.getFecha());
         intent.putExtra(CitaFormActivity.EXTRA_HORA, cita.getHora());
         intent.putExtra(CitaFormActivity.EXTRA_MOTIVO, cita.getMotivo());
+        if (cita.getPacienteId() != null) {
+            intent.putExtra(CitaFormActivity.EXTRA_PACIENTE_ID, cita.getPacienteId().intValue());
+        }
+        if (cita.getMedicoId() != null) {
+            intent.putExtra(CitaFormActivity.EXTRA_MEDICO_ID, cita.getMedicoId().intValue());
+        }
         if (cita.getPuntoAtencion() != null) {
             intent.putExtra(CitaFormActivity.EXTRA_PUNTO_ID, cita.getPuntoAtencion().getId());
         }

@@ -13,6 +13,8 @@ public class Cita {
     private String motivo;
     private String estado;
     private PuntoAtencion puntoAtencion;
+    private Integer pacienteId;
+    private Integer medicoId;
 
     public Cita(int id, String paciente, String medico, String fecha, String hora,
                 String motivo, String estado, PuntoAtencion puntoAtencion) {
@@ -88,5 +90,21 @@ public class Cita {
 
     public void setPuntoAtencion(PuntoAtencion puntoAtencion) {
         this.puntoAtencion = puntoAtencion;
+    }
+
+    public Integer getPacienteId() {
+        return pacienteId;
+    }
+
+    public void setPacienteId(Integer pacienteId) {
+        this.pacienteId = pacienteId;
+    }
+
+    public Integer getMedicoId() {
+        return medicoId;
+    }
+
+    public void setMedicoId(Integer medicoId) {
+        this.medicoId = medicoId;
     }
 }

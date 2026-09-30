@@ -26,6 +26,10 @@ import retrofit2.Response;
 
 public class LoginActivity extends AppCompatActivity {
 
+    // Datos de la sesión que se envían a la pantalla principal (y de ahí a Citas).
+    public static final String EXTRA_USUARIO_ID = "usuarioId";
+    public static final String EXTRA_USUARIO_NOMBRE = "usuarioNombre";
+
     private TextInputLayout tilCorreo;
     private TextInputLayout tilContrasena;
     private TextInputEditText etCorreo;
@@ -103,8 +107,7 @@ public class LoginActivity extends AppCompatActivity {
                     return;
                 }
                 if (response.isSuccessful() && response.body() != null) {
-                    String rol = response.body().getRol();
-                    irAPantallaPrincipal(rol != null ? rol : MainActivity.ROL_PACIENTE);
+                    irAPantallaPrincipal(response.body());
                 } else if (response.code() == 404) {
                     // La cuenta existe en Firebase pero no tiene perfil en el sistema.
                     mAuth.signOut();
@@ -153,9 +156,13 @@ public class LoginActivity extends AppCompatActivity {
         return valido;
     }
 
-    private void irAPantallaPrincipal(String rol) {
+    private void irAPantallaPrincipal(Usuario usuario) {
+        String rol = usuario.getRol() != null ? usuario.getRol() : MainActivity.ROL_PACIENTE;
+
         Intent intent = new Intent(this, MainActivity.class);
         intent.putExtra("rol", rol);
+        intent.putExtra(EXTRA_USUARIO_ID, usuario.getId());
+        intent.putExtra(EXTRA_USUARIO_NOMBRE, usuario.getNombre());
         startActivity(intent);
         finish();
     }

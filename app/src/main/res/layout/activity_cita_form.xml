@@ -25,32 +25,32 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilPaciente"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:hint="@string/hint_paciente">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etPaciente"
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/actvPaciente"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textPersonName|textCapWords" />
+                android:inputType="none" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilMedico"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:hint="@string/hint_medico">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etMedico"
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/actvMedico"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textPersonName|textCapWords" />
+                android:inputType="none" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
