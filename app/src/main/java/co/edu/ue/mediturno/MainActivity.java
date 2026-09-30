@@ -26,10 +26,10 @@ import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends AppCompatActivity {
 
-    // Mientras la API no defina los roles, todos los usuarios ven los tres módulos.
-    // Cuando los roles estén definidos, cambiar a false para que solo ADMIN vea
-    // Usuarios e Inventario.
-    private static final boolean MOSTRAR_TODOS_LOS_MODULOS = true;
+    // Roles del sistema (deben escribirse igual que en la API).
+    public static final String ROL_ADMIN = "ADMIN";
+    public static final String ROL_MEDICO = "MEDICO";
+    public static final String ROL_PACIENTE = "PACIENTE";
 
     private MaterialToolbar toolbar;
     private BottomNavigationView bottomNav;
@@ -86,16 +86,22 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Define qué módulos ve cada rol:
+     * - ADMIN: Usuarios, Inventario y Citas.
+     * - MEDICO: Inventario y Citas.
+     * - PACIENTE (y cualquier otro rol): solo Citas.
+     */
     private void configurarMenuPorRol() {
-        // TODO-API: ajustar qué módulos ve cada rol según los roles que devuelva la API.
-        // Con MOSTRAR_TODOS_LOS_MODULOS en false: ADMIN ve todo y cualquier otro rol solo ve Citas.
-        boolean verTodo = MOSTRAR_TODOS_LOS_MODULOS || "ADMIN".equalsIgnoreCase(rol);
+        boolean esAdmin = ROL_ADMIN.equalsIgnoreCase(rol);
+        boolean esMedico = ROL_MEDICO.equalsIgnoreCase(rol);
 
         Menu menu = bottomNav.getMenu();
-        menu.findItem(R.id.nav_usuarios).setVisible(verTodo);
-        menu.findItem(R.id.nav_inventario).setVisible(verTodo);
+        menu.findItem(R.id.nav_usuarios).setVisible(esAdmin);
+        menu.findItem(R.id.nav_inventario).setVisible(esAdmin || esMedico);
         menu.findItem(R.id.nav_citas).setVisible(true);
 
+        // Con un solo módulo visible no hace falta la barra inferior.
         if (contarItemsVisibles() <= 1) {
             bottomNav.setVisibility(View.GONE);
         }
