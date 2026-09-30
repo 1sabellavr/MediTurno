@@ -5,9 +5,13 @@ import android.os.Bundle;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import co.edu.ue.mediturno.R;
+import co.edu.ue.mediturno.api.ApiClient;
+import co.edu.ue.mediturno.api.ApiErrores;
+import co.edu.ue.mediturno.model.Medicamento;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.textfield.TextInputEditText;
@@ -18,6 +22,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MedicamentoFormActivity extends AppCompatActivity {
 
@@ -136,21 +144,45 @@ public class MedicamentoFormActivity extends AppCompatActivity {
 
         int cantidad = Integer.parseInt(cantidadTexto);
 
-        // TODO-API: si modoEdicion es false -> POST /medicamentos (envía nombre, descripción,
-        // cantidad y fecha de vencimiento). Si es true -> PUT /medicamentos/{id}
-        // (envía los mismos campos, incluida la cantidad actualizada).
-        // Reemplazar el resultado de prueba de abajo por la respuesta real de la API
-        // y mostrar el error si el medicamento ya existe.
-        Intent resultado = new Intent();
-        resultado.putExtra(EXTRA_ID, idMedicamento);
-        resultado.putExtra(EXTRA_NOMBRE, nombre);
-        resultado.putExtra(EXTRA_DESCRIPCION, descripcion);
-        resultado.putExtra(EXTRA_CANTIDAD, cantidad);
-        resultado.putExtra(EXTRA_VENCIMIENTO, vencimiento);
-        setResult(RESULT_OK, resultado);
+        Medicamento medicamento = new Medicamento(idMedicamento, nombre, descripcion, cantidad,
+                vencimiento);
+        btnGuardar.setEnabled(false);
 
-        Toast.makeText(this, R.string.medicamento_guardado, Toast.LENGTH_SHORT).show();
-        finish();
+        // POST /api/inventario (agregar) o PUT /api/inventario/{id} (editar o actualizar existencias)
+        Call<Medicamento> llamada = modoEdicion
+                ? ApiClient.getApiService().actualizarMedicamento(idMedicamento, medicamento)
+                : ApiClient.getApiService().crearMedicamento(medicamento);
+
+        llamada.enqueue(new Callback<Medicamento>() {
+            @Override
+            public void onResponse(@NonNull Call<Medicamento> call,
+                                   @NonNull Response<Medicamento> response) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                if (response.isSuccessful()) {
+                    setResult(RESULT_OK);
+                    Toast.makeText(MedicamentoFormActivity.this, R.string.medicamento_guardado,
+                            Toast.LENGTH_SHORT).show();
+                    finish();
+                } else {
+                    btnGuardar.setEnabled(true);
+                    Toast.makeText(MedicamentoFormActivity.this,
+                            ApiErrores.mensaje(MedicamentoFormActivity.this, response),
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Medicamento> call, @NonNull Throwable t) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                btnGuardar.setEnabled(true);
+                Toast.makeText(MedicamentoFormActivity.this, R.string.error_conexion,
+                        Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private boolean validarCampos(String nombre, String cantidadTexto, String vencimiento) {

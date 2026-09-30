@@ -19,12 +19,18 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import co.edu.ue.mediturno.R;
 import co.edu.ue.mediturno.adapter.MedicamentoAdapter;
+import co.edu.ue.mediturno.api.ApiClient;
+import co.edu.ue.mediturno.api.ApiErrores;
 import co.edu.ue.mediturno.model.Medicamento;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class InventarioFragment extends Fragment
         implements MedicamentoAdapter.OnMedicamentoListener {
@@ -38,16 +44,14 @@ public class InventarioFragment extends Fragment
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Cuando el formulario guarda con éxito, se vuelve a pedir la lista a la API.
         formLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
-                    if (result.getResultCode() == Activity.RESULT_OK
-                            && result.getData() != null) {
-                        procesarResultado(result.getData());
+                    if (result.getResultCode() == Activity.RESULT_OK) {
+                        cargarInventario();
                     }
                 });
-
-        cargarDatosDePrueba();
     }
 
     @Nullable
@@ -67,62 +71,44 @@ public class InventarioFragment extends Fragment
         fabNuevo.setOnClickListener(v -> formLauncher.launch(
                 new Intent(requireContext(), MedicamentoFormActivity.class)));
 
-        actualizarVacio();
+        cargarInventario();
         return vista;
     }
 
-    private void cargarDatosDePrueba() {
-        // TODO-API: GET /medicamentos
-        // Recibe: lista de Medicamento (id, nombre, descripción, cantidad y fecha de vencimiento).
-        // Reemplazar estos datos de prueba por la respuesta de la API.
-        medicamentos.add(new Medicamento(1, "Acetaminofén 500 mg",
-                "Analgésico y antipirético, caja x 20 tabletas", 120, "15/03/2027"));
-        medicamentos.add(new Medicamento(2, "Ibuprofeno 400 mg",
-                "Antiinflamatorio, caja x 10 tabletas", 8, "30/11/2026"));
-        medicamentos.add(new Medicamento(3, "Amoxicilina 500 mg",
-                "Antibiótico, caja x 12 cápsulas", 45, "10/08/2027"));
-        medicamentos.add(new Medicamento(4, "Loratadina 10 mg",
-                "Antihistamínico, caja x 10 tabletas", 60, "01/06/2027"));
+    // GET /api/inventario
+    private void cargarInventario() {
+        ApiClient.getApiService().obtenerInventario().enqueue(new Callback<List<Medicamento>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<Medicamento>> call,
+                                   @NonNull Response<List<Medicamento>> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null) {
+                    medicamentos.clear();
+                    medicamentos.addAll(response.body());
+                    adapter.notifyDataSetChanged();
+                    actualizarVacio();
+                } else {
+                    mostrarMensaje(ApiErrores.mensaje(requireContext(), response));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<Medicamento>> call, @NonNull Throwable t) {
+                if (isAdded()) {
+                    mostrarMensaje(getString(R.string.error_conexion));
+                }
+            }
+        });
     }
 
     private void actualizarVacio() {
         tvVacio.setVisibility(medicamentos.isEmpty() ? View.VISIBLE : View.GONE);
     }
 
-    private void procesarResultado(Intent data) {
-        int id = data.getIntExtra(MedicamentoFormActivity.EXTRA_ID, 0);
-        String nombre = data.getStringExtra(MedicamentoFormActivity.EXTRA_NOMBRE);
-        String descripcion = data.getStringExtra(MedicamentoFormActivity.EXTRA_DESCRIPCION);
-        int cantidad = data.getIntExtra(MedicamentoFormActivity.EXTRA_CANTIDAD, 0);
-        String vencimiento = data.getStringExtra(MedicamentoFormActivity.EXTRA_VENCIMIENTO);
-
-        if (id == 0) {
-            medicamentos.add(new Medicamento(siguienteId(), nombre, descripcion, cantidad,
-                    vencimiento));
-        } else {
-            for (Medicamento medicamento : medicamentos) {
-                if (medicamento.getId() == id) {
-                    medicamento.setNombre(nombre);
-                    medicamento.setDescripcion(descripcion);
-                    medicamento.setCantidad(cantidad);
-                    medicamento.setFechaVencimiento(vencimiento);
-                    break;
-                }
-            }
-        }
-
-        adapter.notifyDataSetChanged();
-        actualizarVacio();
-    }
-
-    private int siguienteId() {
-        int maximo = 0;
-        for (Medicamento medicamento : medicamentos) {
-            if (medicamento.getId() > maximo) {
-                maximo = medicamento.getId();
-            }
-        }
-        return maximo + 1;
+    private void mostrarMensaje(String mensaje) {
+        Toast.makeText(requireContext(), mensaje, Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -144,16 +130,37 @@ public class InventarioFragment extends Fragment
                 .setMessage(getString(R.string.eliminar_medicamento_mensaje,
                         medicamento.getNombre()))
                 .setNegativeButton(R.string.btn_cancelar, null)
-                .setPositiveButton(R.string.btn_eliminar, (dialog, which) -> {
-                    // TODO-API: DELETE /medicamentos/{id}
-                    // Envía: id del medicamento. Recibe: confirmación de eliminación.
-                    // Quitar el medicamento de la lista solo cuando la API confirme.
-                    medicamentos.remove(medicamento);
-                    adapter.notifyDataSetChanged();
-                    actualizarVacio();
-                    Toast.makeText(requireContext(), R.string.medicamento_eliminado,
-                            Toast.LENGTH_SHORT).show();
-                })
+                .setPositiveButton(R.string.btn_eliminar,
+                        (dialog, which) -> eliminarMedicamento(medicamento))
                 .show();
+    }
+
+    // DELETE /api/inventario/{id}
+    private void eliminarMedicamento(Medicamento medicamento) {
+        ApiClient.getApiService().eliminarMedicamento(medicamento.getId())
+                .enqueue(new Callback<Void>() {
+                    @Override
+                    public void onResponse(@NonNull Call<Void> call,
+                                           @NonNull Response<Void> response) {
+                        if (!isAdded()) {
+                            return;
+                        }
+                        if (response.isSuccessful()) {
+                            medicamentos.remove(medicamento);
+                            adapter.notifyDataSetChanged();
+                            actualizarVacio();
+                            mostrarMensaje(getString(R.string.medicamento_eliminado));
+                        } else {
+                            mostrarMensaje(ApiErrores.mensaje(requireContext(), response));
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                        if (isAdded()) {
+                            mostrarMensaje(getString(R.string.error_conexion));
+                        }
+                    }
+                });
     }
 }
