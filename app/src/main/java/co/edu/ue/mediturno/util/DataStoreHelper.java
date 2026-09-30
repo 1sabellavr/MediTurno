@@ -35,8 +35,9 @@ public class DataStoreHelper {
         return dataStore;
     }
 
-    // Guardar datos de sesión (Token de Firebase y Email) de forma asíncrona.
-
+    /**
+     * Guardar datos de sesión (Token de Firebase y Email) de forma asíncrona.
+     */
     public static void guardarSesion(Context context, String token, String email) {
         getInstance(context).updateDataAsync(prefs -> {
             MutablePreferences mutablePreferences = prefs.toMutablePreferences();
@@ -46,8 +47,9 @@ public class DataStoreHelper {
         });
     }
 
-    //Obtener el token de sesión almacenado.
-
+    /**
+     * Obtener el token de sesión almacenado.
+     */
     public static Flowable<String> obtenerTokenSesion(Context context) {
         return getInstance(context).data().map(prefs -> {
             String token = prefs.get(KEY_TOKEN_SESION);
