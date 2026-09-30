@@ -41,4 +41,22 @@ public class UserContract {
                     COL_MED_DESCRIPCION + " TEXT, " +
                     COL_MED_CANTIDAD + " INTEGER NOT NULL, " +
                     COL_MED_FECHA_VENCIMIENTO + " TEXT NOT NULL);";
+
+    // TABLA 3: TRATAMIENTOS (medicamentos que cada usuario toma; se guardan solo en el teléfono)
+    public static final String TABLA_TRATAMIENTOS = "tratamientos";
+    public static final String COL_TRAT_ID = "id";
+    public static final String COL_TRAT_USUARIO = "usuario";
+    public static final String COL_TRAT_MEDICAMENTO = "medicamento";
+    public static final String COL_TRAT_DOSIS = "dosis";
+    public static final String COL_TRAT_HORA = "hora";
+    public static final String COL_TRAT_NOTAS = "notas";
+
+    public static final String CREATE_TABLE_TRATAMIENTOS =
+            "CREATE TABLE " + TABLA_TRATAMIENTOS + " (" +
+                    COL_TRAT_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    COL_TRAT_USUARIO + " TEXT NOT NULL, " +
+                    COL_TRAT_MEDICAMENTO + " TEXT NOT NULL, " +
+                    COL_TRAT_DOSIS + " TEXT NOT NULL, " +
+                    COL_TRAT_HORA + " TEXT NOT NULL, " +
+                    COL_TRAT_NOTAS + " TEXT);";
 }

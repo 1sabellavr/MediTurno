@@ -12,4 +12,8 @@
         android:id="@+id/nav_citas"
         android:icon="@drawable/ic_citas"
         android:title="@string/nav_citas" />
+    <item
+        android:id="@+id/nav_tratamiento"
+        android:icon="@drawable/ic_tratamiento"
+        android:title="@string/nav_tratamiento" />
 </menu>

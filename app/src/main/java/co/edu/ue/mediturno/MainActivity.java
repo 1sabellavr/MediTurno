@@ -18,6 +18,7 @@ import androidx.fragment.app.Fragment;
 import co.edu.ue.mediturno.ui.auth.LoginActivity;
 import co.edu.ue.mediturno.ui.citas.CitasFragment;
 import co.edu.ue.mediturno.ui.inventario.InventarioFragment;
+import co.edu.ue.mediturno.ui.tratamiento.TratamientoFragment;
 import co.edu.ue.mediturno.ui.usuarios.UsuariosFragment;
 import co.edu.ue.mediturno.util.NotificacionHelper;
 import com.google.android.material.appbar.MaterialToolbar;
@@ -91,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
      * - ADMIN: Usuarios, Inventario y Citas.
      * - MEDICO: Inventario y Citas.
      * - PACIENTE (y cualquier otro rol): solo Citas.
+     * Mi tratamiento (local en el teléfono) lo ven todos.
      */
     private void configurarMenuPorRol() {
         boolean esAdmin = ROL_ADMIN.equalsIgnoreCase(rol);
@@ -100,6 +102,8 @@ public class MainActivity extends AppCompatActivity {
         menu.findItem(R.id.nav_usuarios).setVisible(esAdmin);
         menu.findItem(R.id.nav_inventario).setVisible(esAdmin || esMedico);
         menu.findItem(R.id.nav_citas).setVisible(true);
+        // Mi tratamiento es personal y local: lo ven todos los roles.
+        menu.findItem(R.id.nav_tratamiento).setVisible(true);
 
         // Con un solo módulo visible no hace falta la barra inferior.
         if (contarItemsVisibles() <= 1) {
@@ -148,6 +152,8 @@ public class MainActivity extends AppCompatActivity {
             fragment = new UsuariosFragment();
         } else if (idItem == R.id.nav_inventario) {
             fragment = new InventarioFragment();
+        } else if (idItem == R.id.nav_tratamiento) {
+            fragment = new TratamientoFragment();
         } else {
             fragment = new CitasFragment();
         }
@@ -165,6 +171,8 @@ public class MainActivity extends AppCompatActivity {
             toolbar.setTitle(R.string.nav_usuarios);
         } else if (idItem == R.id.nav_inventario) {
             toolbar.setTitle(R.string.nav_inventario);
+        } else if (idItem == R.id.nav_tratamiento) {
+            toolbar.setTitle(R.string.nav_tratamiento);
         } else {
             toolbar.setTitle(R.string.nav_citas);
         }
