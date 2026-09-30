@@ -15,4 +15,11 @@
     </style>
 
     <style name="Theme.MediTurno" parent="Base.Theme.MediTurno" />
+
+    <!-- Menú desplegable de la barra superior: texto oscuro sobre fondo claro -->
+    <style name="ThemeOverlay.MediTurno.Popup" parent="ThemeOverlay.AppCompat.Light">
+        <item name="android:textColorPrimary">@color/texto_principal</item>
+        <item name="android:textColorSecondary">@color/texto_secundario</item>
+        <item name="android:textColor">@color/texto_principal</item>
+    </style>
 </resources>

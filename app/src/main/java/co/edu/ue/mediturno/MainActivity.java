@@ -26,6 +26,11 @@ import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends AppCompatActivity {
 
+    // Mientras la API no defina los roles, todos los usuarios ven los tres módulos.
+    // Cuando los roles estén definidos, cambiar a false para que solo ADMIN vea
+    // Usuarios e Inventario.
+    private static final boolean MOSTRAR_TODOS_LOS_MODULOS = true;
+
     private MaterialToolbar toolbar;
     private BottomNavigationView bottomNav;
     private String rol;
@@ -83,12 +88,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void configurarMenuPorRol() {
         // TODO-API: ajustar qué módulos ve cada rol según los roles que devuelva la API.
-        // Regla provisional: ADMIN ve todo y cualquier otro rol solo ve Citas.
-        boolean esAdmin = "ADMIN".equalsIgnoreCase(rol);
+        // Con MOSTRAR_TODOS_LOS_MODULOS en false: ADMIN ve todo y cualquier otro rol solo ve Citas.
+        boolean verTodo = MOSTRAR_TODOS_LOS_MODULOS || "ADMIN".equalsIgnoreCase(rol);
 
         Menu menu = bottomNav.getMenu();
-        menu.findItem(R.id.nav_usuarios).setVisible(esAdmin);
-        menu.findItem(R.id.nav_inventario).setVisible(esAdmin);
+        menu.findItem(R.id.nav_usuarios).setVisible(verTodo);
+        menu.findItem(R.id.nav_inventario).setVisible(verTodo);
         menu.findItem(R.id.nav_citas).setVisible(true);
 
         if (contarItemsVisibles() <= 1) {
