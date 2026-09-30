@@ -22,6 +22,7 @@ import co.edu.ue.mediturno.ui.usuarios.UsuariosFragment;
 import co.edu.ue.mediturno.util.NotificacionHelper;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -70,6 +71,10 @@ public class MainActivity extends AppCompatActivity {
         toolbar.setOnMenuItemClickListener(item -> {
             if (item.getItemId() == R.id.action_cerrar_sesion) {
                 cerrarSesion();
+                return true;
+            }
+            if (item.getItemId() == R.id.action_mapa) {
+                startActivity(new Intent(this, MapsActivity.class));
                 return true;
             }
             return false;
@@ -155,7 +160,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void cerrarSesion() {
-        // TODO: borrar el token y el rol guardados cuando exista el manejo de sesión.
+        // Cierra la sesión de Firebase; si no, el Login lo reenvía a la pantalla principal.
+        FirebaseAuth.getInstance().signOut();
         Intent intent = new Intent(this, LoginActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
