@@ -11,11 +11,17 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import co.edu.ue.mediturno.MainActivity;
 import co.edu.ue.mediturno.R;
+import co.edu.ue.mediturno.api.ApiClient;
+import co.edu.ue.mediturno.api.ApiErrores;
+import co.edu.ue.mediturno.model.Cita;
 import co.edu.ue.mediturno.model.PuntoAtencion;
-import co.edu.ue.mediturno.util.PuntosAtencionDatos;
+import co.edu.ue.mediturno.model.Usuario;
+import co.edu.ue.mediturno.util.NotificacionHelper;
 import co.edu.ue.mediturno.util.UbicacionHelper;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.datepicker.CalendarConstraints;
@@ -35,6 +41,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class CitaFormActivity extends AppCompatActivity {
 
     public static final String EXTRA_ID = "id";
@@ -44,6 +54,13 @@ public class CitaFormActivity extends AppCompatActivity {
     public static final String EXTRA_HORA = "hora";
     public static final String EXTRA_MOTIVO = "motivo";
     public static final String EXTRA_PUNTO_ID = "punto_id";
+    public static final String EXTRA_PACIENTE_ID = "paciente_id";
+    public static final String EXTRA_MEDICO_ID = "medico_id";
+
+    // Datos de quien inició sesión
+    public static final String EXTRA_ROL = "rol";
+    public static final String EXTRA_USUARIO_ID = "usuario_id";
+    public static final String EXTRA_USUARIO_NOMBRE = "usuario_nombre";
 
     private TextView tvTituloForm;
     private TextView tvDireccionPunto;
@@ -54,11 +71,11 @@ public class CitaFormActivity extends AppCompatActivity {
     private TextInputLayout tilFecha;
     private TextInputLayout tilHora;
     private TextInputLayout tilMotivo;
-    private TextInputEditText etPaciente;
-    private TextInputEditText etMedico;
     private TextInputEditText etFecha;
     private TextInputEditText etHora;
     private TextInputEditText etMotivo;
+    private MaterialAutoCompleteTextView actvPaciente;
+    private MaterialAutoCompleteTextView actvMedico;
     private MaterialAutoCompleteTextView actvPunto;
     private MaterialButton btnSedeCercana;
     private MaterialButton btnCancelar;
@@ -66,8 +83,23 @@ public class CitaFormActivity extends AppCompatActivity {
 
     private int idCita;
     private boolean modoEdicion;
-    private List<PuntoAtencion> puntos;
+    private final List<PuntoAtencion> puntos = new ArrayList<>();
+    private ArrayAdapter<String> adaptadorPuntos;
     private PuntoAtencion puntoSeleccionado;
+
+    // Pacientes y médicos (usuarios con ese rol) y la selección actual.
+    private final List<Usuario> pacientes = new ArrayList<>();
+    private final List<Usuario> medicos = new ArrayList<>();
+    private ArrayAdapter<String> adaptadorPacientes;
+    private ArrayAdapter<String> adaptadorMedicos;
+    private Integer pacienteId;
+    private Integer medicoId;
+    private String nombrePaciente = "";
+    private String nombreMedico = "";
+
+    private String rolSesion = "";
+    private int usuarioSesionId;
+    private String usuarioSesionNombre = "";
     private Location ubicacionActual;
     private SimpleDateFormat formatoFecha;
 
@@ -94,6 +126,7 @@ public class CitaFormActivity extends AppCompatActivity {
         inicializarVistas();
         configurarPuntosAtencion();
         cargarDatosSiEsEdicion();
+        configurarPersonas();
         configurarEventos();
     }
 
@@ -107,8 +140,8 @@ public class CitaFormActivity extends AppCompatActivity {
         tilFecha = findViewById(R.id.tilFecha);
         tilHora = findViewById(R.id.tilHora);
         tilMotivo = findViewById(R.id.tilMotivo);
-        etPaciente = findViewById(R.id.etPaciente);
-        etMedico = findViewById(R.id.etMedico);
+        actvPaciente = findViewById(R.id.actvPaciente);
+        actvMedico = findViewById(R.id.actvMedico);
         actvPunto = findViewById(R.id.actvPunto);
         btnSedeCercana = findViewById(R.id.btnSedeCercana);
         etFecha = findViewById(R.id.etFecha);
@@ -119,19 +152,66 @@ public class CitaFormActivity extends AppCompatActivity {
     }
 
     private void configurarPuntosAtencion() {
-        // TODO-API: GET /puntos-atencion (ver PuntosAtencionDatos).
-        puntos = PuntosAtencionDatos.obtenerTodos();
-
-        List<String> nombres = new ArrayList<>();
-        for (PuntoAtencion punto : puntos) {
-            nombres.add(punto.getNombre());
-        }
-
-        ArrayAdapter<String> adaptador = new ArrayAdapter<>(
-                this, android.R.layout.simple_dropdown_item_1line, nombres);
-        actvPunto.setAdapter(adaptador);
+        adaptadorPuntos = new ArrayAdapter<>(
+                this, android.R.layout.simple_dropdown_item_1line, new ArrayList<>());
+        actvPunto.setAdapter(adaptadorPuntos);
         actvPunto.setOnItemClickListener((parent, view, position, id) ->
                 seleccionarPunto(puntos.get(position)));
+
+        cargarPuntosAtencion();
+    }
+
+    // GET /api/puntos-atencion
+    private void cargarPuntosAtencion() {
+        ApiClient.getApiService().obtenerPuntosAtencion().enqueue(new Callback<List<PuntoAtencion>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<PuntoAtencion>> call,
+                                   @NonNull Response<List<PuntoAtencion>> response) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null) {
+                    puntos.clear();
+                    puntos.addAll(response.body());
+
+                    adaptadorPuntos.clear();
+                    for (PuntoAtencion punto : puntos) {
+                        adaptadorPuntos.add(punto.getNombre());
+                    }
+                    adaptadorPuntos.notifyDataSetChanged();
+
+                    preseleccionarPuntoSiEsEdicion();
+                } else {
+                    Toast.makeText(CitaFormActivity.this,
+                            ApiErrores.mensaje(CitaFormActivity.this, response),
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<PuntoAtencion>> call, @NonNull Throwable t) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                Toast.makeText(CitaFormActivity.this, R.string.error_conexion,
+                        Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    // Al reprogramar, se deja elegido el punto de atención que ya tenía la cita.
+    private void preseleccionarPuntoSiEsEdicion() {
+        if (!modoEdicion || puntoSeleccionado != null) {
+            return;
+        }
+        int idPunto = getIntent().getIntExtra(EXTRA_PUNTO_ID, 0);
+        for (PuntoAtencion punto : puntos) {
+            if (punto.getId() == idPunto) {
+                actvPunto.setText(punto.getNombre(), false);
+                seleccionarPunto(punto);
+                break;
+            }
+        }
     }
 
     private void seleccionarPunto(PuntoAtencion punto) {
@@ -156,23 +236,126 @@ public class CitaFormActivity extends AppCompatActivity {
         idCita = intent.getIntExtra(EXTRA_ID, 0);
         modoEdicion = idCita != 0;
 
+        String rolRecibido = intent.getStringExtra(EXTRA_ROL);
+        rolSesion = rolRecibido != null ? rolRecibido : "";
+        usuarioSesionId = intent.getIntExtra(EXTRA_USUARIO_ID, 0);
+        String nombreRecibido = intent.getStringExtra(EXTRA_USUARIO_NOMBRE);
+        usuarioSesionNombre = nombreRecibido != null ? nombreRecibido : "";
+
         if (modoEdicion) {
             tvTituloForm.setText(R.string.cita_form_titulo_editar);
-            etPaciente.setText(intent.getStringExtra(EXTRA_PACIENTE));
-            etMedico.setText(intent.getStringExtra(EXTRA_MEDICO));
+
+            // Se dejan los datos que ya tenía la cita (las citas antiguas pueden no tener ids).
+            int idPacienteGuardado = intent.getIntExtra(EXTRA_PACIENTE_ID, 0);
+            int idMedicoGuardado = intent.getIntExtra(EXTRA_MEDICO_ID, 0);
+            pacienteId = idPacienteGuardado != 0 ? idPacienteGuardado : null;
+            medicoId = idMedicoGuardado != 0 ? idMedicoGuardado : null;
+            nombrePaciente = valorOVacio(intent.getStringExtra(EXTRA_PACIENTE));
+            nombreMedico = valorOVacio(intent.getStringExtra(EXTRA_MEDICO));
+            if (pacienteId != null) {
+                actvPaciente.setText(nombrePaciente, false);
+            }
+            if (medicoId != null) {
+                actvMedico.setText(nombreMedico, false);
+            }
             etFecha.setText(intent.getStringExtra(EXTRA_FECHA));
             etHora.setText(intent.getStringExtra(EXTRA_HORA));
             etMotivo.setText(intent.getStringExtra(EXTRA_MOTIVO));
-
-            PuntoAtencion punto = PuntosAtencionDatos.buscarPorId(
-                    intent.getIntExtra(EXTRA_PUNTO_ID, 0));
-            if (punto != null) {
-                actvPunto.setText(punto.getNombre(), false);
-                seleccionarPunto(punto);
-            }
         } else {
             tvTituloForm.setText(R.string.cita_form_titulo_crear);
         }
+    }
+
+    private String valorOVacio(String texto) {
+        return texto != null ? texto : "";
+    }
+
+    // ---------- Paciente y médico (usuarios con ese rol) ----------
+
+    private void configurarPersonas() {
+        adaptadorPacientes = new ArrayAdapter<>(
+                this, android.R.layout.simple_dropdown_item_1line, new ArrayList<>());
+        adaptadorMedicos = new ArrayAdapter<>(
+                this, android.R.layout.simple_dropdown_item_1line, new ArrayList<>());
+        actvPaciente.setAdapter(adaptadorPacientes);
+        actvMedico.setAdapter(adaptadorMedicos);
+
+        actvPaciente.setOnItemClickListener((parent, view, position, id) -> {
+            Usuario elegido = pacientes.get(position);
+            pacienteId = elegido.getId();
+            nombrePaciente = elegido.getNombre();
+            tilPaciente.setError(null);
+        });
+        actvMedico.setOnItemClickListener((parent, view, position, id) -> {
+            Usuario elegido = medicos.get(position);
+            medicoId = elegido.getId();
+            nombreMedico = elegido.getNombre();
+            tilMedico.setError(null);
+        });
+
+        // Un paciente solo agenda citas para sí mismo.
+        if (MainActivity.ROL_PACIENTE.equalsIgnoreCase(rolSesion) && usuarioSesionId != 0) {
+            pacienteId = usuarioSesionId;
+            nombrePaciente = usuarioSesionNombre;
+            actvPaciente.setText(nombrePaciente, false);
+            tilPaciente.setEnabled(false);
+        } else {
+            cargarUsuariosPorRol(MainActivity.ROL_PACIENTE, pacientes, adaptadorPacientes,
+                    R.string.sin_pacientes);
+        }
+
+        // Un médico agenda citas en su propia agenda.
+        if (MainActivity.ROL_MEDICO.equalsIgnoreCase(rolSesion) && usuarioSesionId != 0) {
+            medicoId = usuarioSesionId;
+            nombreMedico = usuarioSesionNombre;
+            actvMedico.setText(nombreMedico, false);
+            tilMedico.setEnabled(false);
+        } else {
+            cargarUsuariosPorRol(MainActivity.ROL_MEDICO, medicos, adaptadorMedicos,
+                    R.string.sin_medicos);
+        }
+    }
+
+    // GET /api/usuarios?rol=...
+    private void cargarUsuariosPorRol(String rol, List<Usuario> destino,
+                                      ArrayAdapter<String> adaptador, int mensajeSinResultados) {
+        ApiClient.getApiService().obtenerUsuariosPorRol(rol).enqueue(new Callback<List<Usuario>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<Usuario>> call,
+                                   @NonNull Response<List<Usuario>> response) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null) {
+                    destino.clear();
+                    destino.addAll(response.body());
+
+                    adaptador.clear();
+                    for (Usuario usuario : destino) {
+                        adaptador.add(usuario.getNombre());
+                    }
+                    adaptador.notifyDataSetChanged();
+
+                    if (destino.isEmpty()) {
+                        Toast.makeText(CitaFormActivity.this, mensajeSinResultados,
+                                Toast.LENGTH_LONG).show();
+                    }
+                } else {
+                    Toast.makeText(CitaFormActivity.this,
+                            ApiErrores.mensaje(CitaFormActivity.this, response),
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<Usuario>> call, @NonNull Throwable t) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                Toast.makeText(CitaFormActivity.this, R.string.error_conexion,
+                        Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void configurarEventos() {
@@ -188,6 +371,10 @@ public class CitaFormActivity extends AppCompatActivity {
     // ---------- GPS del dispositivo ----------
 
     private void solicitarSedeCercana() {
+        if (puntos.isEmpty()) {
+            Toast.makeText(this, R.string.error_conexion, Toast.LENGTH_LONG).show();
+            return;
+        }
         if (UbicacionHelper.tienePermiso(this)) {
             buscarSedeCercana();
         } else {
@@ -301,37 +488,72 @@ public class CitaFormActivity extends AppCompatActivity {
     }
 
     private void guardar() {
-        String paciente = texto(etPaciente);
-        String medico = texto(etMedico);
         String fecha = texto(etFecha);
         String hora = texto(etHora);
         String motivo = texto(etMotivo);
 
-        if (!validarCampos(paciente, medico, fecha, hora, motivo)) {
+        if (!validarCampos(fecha, hora, motivo)) {
             return;
         }
 
-        // TODO-API: si modoEdicion es false -> POST /citas (envía paciente, médico, id del
-        // punto de atención, fecha, hora y motivo). Si es true (reprogramar) ->
-        // PUT /citas/{id} con los mismos campos.
-        // Reemplazar el resultado de prueba de abajo por la respuesta real de la API
-        // y mostrar el error si el médico ya tiene una cita en esa fecha y hora.
-        Intent resultado = new Intent();
-        resultado.putExtra(EXTRA_ID, idCita);
-        resultado.putExtra(EXTRA_PACIENTE, paciente);
-        resultado.putExtra(EXTRA_MEDICO, medico);
-        resultado.putExtra(EXTRA_PUNTO_ID, puntoSeleccionado.getId());
-        resultado.putExtra(EXTRA_FECHA, fecha);
-        resultado.putExtra(EXTRA_HORA, hora);
-        resultado.putExtra(EXTRA_MOTIVO, motivo);
-        setResult(RESULT_OK, resultado);
+        // La API toma los nombres a partir de los ids del paciente y del médico.
+        Cita cita = new Cita(idCita, nombrePaciente, nombreMedico, fecha, hora, motivo,
+                Cita.ESTADO_PROGRAMADA, puntoSeleccionado);
+        cita.setPacienteId(pacienteId);
+        cita.setMedicoId(medicoId);
+        btnGuardar.setEnabled(false);
 
-        Toast.makeText(this, R.string.cita_guardada, Toast.LENGTH_SHORT).show();
-        finish();
+        // POST /api/citas (agendar) o PUT /api/citas/{id} (reprogramar)
+        Call<Cita> llamada = modoEdicion
+                ? ApiClient.getApiService().actualizarCita(idCita, cita)
+                : ApiClient.getApiService().crearCita(cita);
+
+        llamada.enqueue(new Callback<Cita>() {
+            @Override
+            public void onResponse(@NonNull Call<Cita> call, @NonNull Response<Cita> response) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null) {
+                    programarRecordatorio(response.body());
+                    setResult(RESULT_OK);
+                    Toast.makeText(CitaFormActivity.this, R.string.cita_guardada,
+                            Toast.LENGTH_SHORT).show();
+                    finish();
+                } else {
+                    btnGuardar.setEnabled(true);
+                    // Por ejemplo: el médico ya tiene una cita en esa fecha y hora (409).
+                    Toast.makeText(CitaFormActivity.this,
+                            ApiErrores.mensaje(CitaFormActivity.this, response),
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Cita> call, @NonNull Throwable t) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                btnGuardar.setEnabled(true);
+                Toast.makeText(CitaFormActivity.this, R.string.error_conexion,
+                        Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
-    private boolean validarCampos(String paciente, String medico, String fecha,
-                                  String hora, String motivo) {
+    // Recordatorio de la cita en el teléfono. Primero se cancela el anterior, por si la
+    // cita se reprogramó y el aviso nuevo ya no cabe (queda a menos de una hora).
+    private void programarRecordatorio(Cita cita) {
+        NotificacionHelper.cancelarRecordatorio(getApplicationContext(), cita.getId());
+        boolean programado = NotificacionHelper.programarRecordatorio(
+                getApplicationContext(), cita);
+        Toast.makeText(getApplicationContext(),
+                programado ? R.string.recordatorio_programado
+                        : R.string.recordatorio_no_programado,
+                Toast.LENGTH_LONG).show();
+    }
+
+    private boolean validarCampos(String fecha, String hora, String motivo) {
         boolean valido = true;
 
         tilPaciente.setError(null);
@@ -341,13 +563,13 @@ public class CitaFormActivity extends AppCompatActivity {
         tilHora.setError(null);
         tilMotivo.setError(null);
 
-        if (paciente.isEmpty()) {
-            tilPaciente.setError(getString(R.string.error_paciente_vacio));
+        if (pacienteId == null) {
+            tilPaciente.setError(getString(R.string.error_paciente_seleccion));
             valido = false;
         }
 
-        if (medico.isEmpty()) {
-            tilMedico.setError(getString(R.string.error_medico_vacio));
+        if (medicoId == null) {
+            tilMedico.setError(getString(R.string.error_medico_seleccion));
             valido = false;
         }
 

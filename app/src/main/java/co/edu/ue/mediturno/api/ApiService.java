@@ -23,6 +23,10 @@ public interface ApiService {
     @GET("api/usuarios")
     Call<List<Usuario>> obtenerUsuarios();
 
+    // Usuarios de un rol (por ejemplo, los médicos o los pacientes)
+    @GET("api/usuarios")
+    Call<List<Usuario>> obtenerUsuariosPorRol(@Query("rol") String rol);
+
     // Busca el perfil (y el rol) de un usuario por su correo. Se usa al iniciar sesión.
     @GET("api/usuarios/por-correo")
     Call<Usuario> obtenerUsuarioPorCorreo(@Query("correo") String correo);
@@ -52,6 +56,14 @@ public interface ApiService {
     // ---------- Citas ----------
     @GET("api/citas")
     Call<List<Cita>> obtenerCitas();
+
+    // Citas de un paciente (lo que ve el rol PACIENTE)
+    @GET("api/citas")
+    Call<List<Cita>> obtenerCitasDePaciente(@Query("pacienteId") int pacienteId);
+
+    // Citas de un médico (su agenda, lo que ve el rol MEDICO)
+    @GET("api/citas")
+    Call<List<Cita>> obtenerCitasDeMedico(@Query("medicoId") int medicoId);
 
     @POST("api/citas")
     Call<Cita> crearCita(@Body Cita cita);

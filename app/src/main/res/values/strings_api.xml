@@ -4,4 +4,8 @@
     <string name="error_servidor">El servidor respondió con un error (código %1$d)</string>
     <string name="sin_perfil">Tu cuenta no tiene un perfil en el sistema. Pide al administrador que te agregue</string>
     <string name="cuenta_vinculada">La cuenta de acceso ya existía; se creó su perfil con el rol elegido</string>
+    <string name="error_paciente_seleccion">Selecciona un paciente</string>
+    <string name="error_medico_seleccion">Selecciona un médico</string>
+    <string name="sin_medicos">No hay médicos registrados. Crea usuarios con el rol MEDICO</string>
+    <string name="sin_pacientes">No hay pacientes registrados</string>
 </resources>
