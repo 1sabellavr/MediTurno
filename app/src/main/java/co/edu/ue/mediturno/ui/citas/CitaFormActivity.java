@@ -11,11 +11,15 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import co.edu.ue.mediturno.R;
+import co.edu.ue.mediturno.api.ApiClient;
+import co.edu.ue.mediturno.api.ApiErrores;
+import co.edu.ue.mediturno.model.Cita;
 import co.edu.ue.mediturno.model.PuntoAtencion;
-import co.edu.ue.mediturno.util.PuntosAtencionDatos;
+import co.edu.ue.mediturno.util.NotificacionHelper;
 import co.edu.ue.mediturno.util.UbicacionHelper;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.datepicker.CalendarConstraints;
@@ -34,6 +38,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class CitaFormActivity extends AppCompatActivity {
 
@@ -66,7 +74,8 @@ public class CitaFormActivity extends AppCompatActivity {
 
     private int idCita;
     private boolean modoEdicion;
-    private List<PuntoAtencion> puntos;
+    private final List<PuntoAtencion> puntos = new ArrayList<>();
+    private ArrayAdapter<String> adaptadorPuntos;
     private PuntoAtencion puntoSeleccionado;
     private Location ubicacionActual;
     private SimpleDateFormat formatoFecha;
@@ -119,19 +128,66 @@ public class CitaFormActivity extends AppCompatActivity {
     }
 
     private void configurarPuntosAtencion() {
-        // TODO-API: GET /puntos-atencion (ver PuntosAtencionDatos).
-        puntos = PuntosAtencionDatos.obtenerTodos();
-
-        List<String> nombres = new ArrayList<>();
-        for (PuntoAtencion punto : puntos) {
-            nombres.add(punto.getNombre());
-        }
-
-        ArrayAdapter<String> adaptador = new ArrayAdapter<>(
-                this, android.R.layout.simple_dropdown_item_1line, nombres);
-        actvPunto.setAdapter(adaptador);
+        adaptadorPuntos = new ArrayAdapter<>(
+                this, android.R.layout.simple_dropdown_item_1line, new ArrayList<>());
+        actvPunto.setAdapter(adaptadorPuntos);
         actvPunto.setOnItemClickListener((parent, view, position, id) ->
                 seleccionarPunto(puntos.get(position)));
+
+        cargarPuntosAtencion();
+    }
+
+    // GET /api/puntos-atencion
+    private void cargarPuntosAtencion() {
+        ApiClient.getApiService().obtenerPuntosAtencion().enqueue(new Callback<List<PuntoAtencion>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<PuntoAtencion>> call,
+                                   @NonNull Response<List<PuntoAtencion>> response) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null) {
+                    puntos.clear();
+                    puntos.addAll(response.body());
+
+                    adaptadorPuntos.clear();
+                    for (PuntoAtencion punto : puntos) {
+                        adaptadorPuntos.add(punto.getNombre());
+                    }
+                    adaptadorPuntos.notifyDataSetChanged();
+
+                    preseleccionarPuntoSiEsEdicion();
+                } else {
+                    Toast.makeText(CitaFormActivity.this,
+                            ApiErrores.mensaje(CitaFormActivity.this, response),
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<PuntoAtencion>> call, @NonNull Throwable t) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                Toast.makeText(CitaFormActivity.this, R.string.error_conexion,
+                        Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    // Al reprogramar, se deja elegido el punto de atención que ya tenía la cita.
+    private void preseleccionarPuntoSiEsEdicion() {
+        if (!modoEdicion || puntoSeleccionado != null) {
+            return;
+        }
+        int idPunto = getIntent().getIntExtra(EXTRA_PUNTO_ID, 0);
+        for (PuntoAtencion punto : puntos) {
+            if (punto.getId() == idPunto) {
+                actvPunto.setText(punto.getNombre(), false);
+                seleccionarPunto(punto);
+                break;
+            }
+        }
     }
 
     private void seleccionarPunto(PuntoAtencion punto) {
@@ -163,13 +219,6 @@ public class CitaFormActivity extends AppCompatActivity {
             etFecha.setText(intent.getStringExtra(EXTRA_FECHA));
             etHora.setText(intent.getStringExtra(EXTRA_HORA));
             etMotivo.setText(intent.getStringExtra(EXTRA_MOTIVO));
-
-            PuntoAtencion punto = PuntosAtencionDatos.buscarPorId(
-                    intent.getIntExtra(EXTRA_PUNTO_ID, 0));
-            if (punto != null) {
-                actvPunto.setText(punto.getNombre(), false);
-                seleccionarPunto(punto);
-            }
         } else {
             tvTituloForm.setText(R.string.cita_form_titulo_crear);
         }
@@ -188,6 +237,10 @@ public class CitaFormActivity extends AppCompatActivity {
     // ---------- GPS del dispositivo ----------
 
     private void solicitarSedeCercana() {
+        if (puntos.isEmpty()) {
+            Toast.makeText(this, R.string.error_conexion, Toast.LENGTH_LONG).show();
+            return;
+        }
         if (UbicacionHelper.tienePermiso(this)) {
             buscarSedeCercana();
         } else {
@@ -311,23 +364,58 @@ public class CitaFormActivity extends AppCompatActivity {
             return;
         }
 
-        // TODO-API: si modoEdicion es false -> POST /citas (envía paciente, médico, id del
-        // punto de atención, fecha, hora y motivo). Si es true (reprogramar) ->
-        // PUT /citas/{id} con los mismos campos.
-        // Reemplazar el resultado de prueba de abajo por la respuesta real de la API
-        // y mostrar el error si el médico ya tiene una cita en esa fecha y hora.
-        Intent resultado = new Intent();
-        resultado.putExtra(EXTRA_ID, idCita);
-        resultado.putExtra(EXTRA_PACIENTE, paciente);
-        resultado.putExtra(EXTRA_MEDICO, medico);
-        resultado.putExtra(EXTRA_PUNTO_ID, puntoSeleccionado.getId());
-        resultado.putExtra(EXTRA_FECHA, fecha);
-        resultado.putExtra(EXTRA_HORA, hora);
-        resultado.putExtra(EXTRA_MOTIVO, motivo);
-        setResult(RESULT_OK, resultado);
+        Cita cita = new Cita(idCita, paciente, medico, fecha, hora, motivo,
+                Cita.ESTADO_PROGRAMADA, puntoSeleccionado);
+        btnGuardar.setEnabled(false);
 
-        Toast.makeText(this, R.string.cita_guardada, Toast.LENGTH_SHORT).show();
-        finish();
+        // POST /api/citas (agendar) o PUT /api/citas/{id} (reprogramar)
+        Call<Cita> llamada = modoEdicion
+                ? ApiClient.getApiService().actualizarCita(idCita, cita)
+                : ApiClient.getApiService().crearCita(cita);
+
+        llamada.enqueue(new Callback<Cita>() {
+            @Override
+            public void onResponse(@NonNull Call<Cita> call, @NonNull Response<Cita> response) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null) {
+                    programarRecordatorio(response.body());
+                    setResult(RESULT_OK);
+                    Toast.makeText(CitaFormActivity.this, R.string.cita_guardada,
+                            Toast.LENGTH_SHORT).show();
+                    finish();
+                } else {
+                    btnGuardar.setEnabled(true);
+                    // Por ejemplo: el médico ya tiene una cita en esa fecha y hora (409).
+                    Toast.makeText(CitaFormActivity.this,
+                            ApiErrores.mensaje(CitaFormActivity.this, response),
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Cita> call, @NonNull Throwable t) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                btnGuardar.setEnabled(true);
+                Toast.makeText(CitaFormActivity.this, R.string.error_conexion,
+                        Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    // Recordatorio de la cita en el teléfono. Primero se cancela el anterior, por si la
+    // cita se reprogramó y el aviso nuevo ya no cabe (queda a menos de una hora).
+    private void programarRecordatorio(Cita cita) {
+        NotificacionHelper.cancelarRecordatorio(getApplicationContext(), cita.getId());
+        boolean programado = NotificacionHelper.programarRecordatorio(
+                getApplicationContext(), cita);
+        Toast.makeText(getApplicationContext(),
+                programado ? R.string.recordatorio_programado
+                        : R.string.recordatorio_no_programado,
+                Toast.LENGTH_LONG).show();
     }
 
     private boolean validarCampos(String paciente, String medico, String fecha,

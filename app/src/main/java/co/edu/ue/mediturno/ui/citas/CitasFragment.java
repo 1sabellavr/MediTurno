@@ -23,10 +23,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import co.edu.ue.mediturno.R;
 import co.edu.ue.mediturno.adapter.CitaAdapter;
+import co.edu.ue.mediturno.api.ApiClient;
+import co.edu.ue.mediturno.api.ApiErrores;
 import co.edu.ue.mediturno.model.Cita;
 import co.edu.ue.mediturno.model.PuntoAtencion;
 import co.edu.ue.mediturno.util.NotificacionHelper;
-import co.edu.ue.mediturno.util.PuntosAtencionDatos;
 import co.edu.ue.mediturno.util.UbicacionHelper;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
@@ -34,6 +35,10 @@ import com.google.android.material.floatingactionbutton.ExtendedFloatingActionBu
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListener {
 
@@ -53,9 +58,9 @@ public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListene
         formLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
-                    if (result.getResultCode() == Activity.RESULT_OK
-                            && result.getData() != null) {
-                        procesarResultado(result.getData());
+                    // Cuando el formulario guarda con éxito, se vuelve a pedir la lista a la API.
+                    if (result.getResultCode() == Activity.RESULT_OK) {
+                        cargarCitas();
                     }
                 });
 
@@ -72,8 +77,6 @@ public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListene
                                 Toast.LENGTH_LONG).show();
                     }
                 });
-
-        cargarDatosDePrueba();
     }
 
     @Nullable
@@ -93,7 +96,7 @@ public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListene
         fabNueva.setOnClickListener(v -> formLauncher.launch(
                 new Intent(requireContext(), CitaFormActivity.class)));
 
-        actualizarVacio();
+        cargarCitas();
         return vista;
     }
 
@@ -135,85 +138,42 @@ public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListene
         });
     }
 
-    // ---------- Datos ----------
+    // ---------- Datos (API) ----------
 
-    private void cargarDatosDePrueba() {
-        // TODO-API: GET /citas
-        // Recibe: lista de Cita (id, paciente, médico, fecha, hora, motivo, estado y punto
-        // de atención).
-        // Reemplazar estos datos de prueba por la respuesta de la API.
-        // Al cargar las citas reales, volver a programar los recordatorios de las citas
-        // futuras con NotificacionHelper.programarRecordatorio(), porque las alarmas
-        // locales se pierden si el teléfono se reinicia.
-        citas.add(new Cita(1, "María Rodríguez", "Dr. Carlos Pérez", "05/10/2026", "09:30",
-                "Control general", Cita.ESTADO_PROGRAMADA, PuntosAtencionDatos.buscarPorId(1)));
-        citas.add(new Cita(2, "Andrés Torres", "Dra. Laura Gómez", "07/10/2026", "14:00",
-                "Dolor de cabeza frecuente", Cita.ESTADO_PROGRAMADA,
-                PuntosAtencionDatos.buscarPorId(2)));
-        citas.add(new Cita(3, "Sofía Herrera", "Dr. Carlos Pérez", "10/10/2026", "11:15",
-                "Revisión de resultados de laboratorio", Cita.ESTADO_CANCELADA,
-                PuntosAtencionDatos.buscarPorId(1)));
+    // GET /api/citas
+    private void cargarCitas() {
+        ApiClient.getApiService().obtenerCitas().enqueue(new Callback<List<Cita>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<Cita>> call,
+                                   @NonNull Response<List<Cita>> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null) {
+                    citas.clear();
+                    citas.addAll(response.body());
+                    adapter.notifyDataSetChanged();
+                    actualizarVacio();
+                } else {
+                    mostrarMensaje(ApiErrores.mensaje(requireContext(), response));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<Cita>> call, @NonNull Throwable t) {
+                if (isAdded()) {
+                    mostrarMensaje(getString(R.string.error_conexion));
+                }
+            }
+        });
     }
 
     private void actualizarVacio() {
         tvVacio.setVisibility(citas.isEmpty() ? View.VISIBLE : View.GONE);
     }
 
-    private void procesarResultado(Intent data) {
-        int id = data.getIntExtra(CitaFormActivity.EXTRA_ID, 0);
-        String paciente = data.getStringExtra(CitaFormActivity.EXTRA_PACIENTE);
-        String medico = data.getStringExtra(CitaFormActivity.EXTRA_MEDICO);
-        String fecha = data.getStringExtra(CitaFormActivity.EXTRA_FECHA);
-        String hora = data.getStringExtra(CitaFormActivity.EXTRA_HORA);
-        String motivo = data.getStringExtra(CitaFormActivity.EXTRA_MOTIVO);
-        PuntoAtencion punto = PuntosAtencionDatos.buscarPorId(
-                data.getIntExtra(CitaFormActivity.EXTRA_PUNTO_ID, 0));
-
-        Cita citaGuardada = null;
-
-        if (id == 0) {
-            citaGuardada = new Cita(siguienteId(), paciente, medico, fecha, hora, motivo,
-                    Cita.ESTADO_PROGRAMADA, punto);
-            citas.add(citaGuardada);
-        } else {
-            for (Cita cita : citas) {
-                if (cita.getId() == id) {
-                    cita.setPaciente(paciente);
-                    cita.setMedico(medico);
-                    cita.setFecha(fecha);
-                    cita.setHora(hora);
-                    cita.setMotivo(motivo);
-                    cita.setPuntoAtencion(punto);
-                    citaGuardada = cita;
-                    break;
-                }
-            }
-        }
-
-        adapter.notifyDataSetChanged();
-        actualizarVacio();
-
-        if (citaGuardada != null) {
-            programarRecordatorio(citaGuardada);
-        }
-    }
-
-    private void programarRecordatorio(Cita cita) {
-        boolean programado = NotificacionHelper.programarRecordatorio(requireContext(), cita);
-        Toast.makeText(requireContext(),
-                programado ? R.string.recordatorio_programado
-                        : R.string.recordatorio_no_programado,
-                Toast.LENGTH_LONG).show();
-    }
-
-    private int siguienteId() {
-        int maximo = 0;
-        for (Cita cita : citas) {
-            if (cita.getId() > maximo) {
-                maximo = cita.getId();
-            }
-        }
-        return maximo + 1;
+    private void mostrarMensaje(String mensaje) {
+        Toast.makeText(requireContext(), mensaje, Toast.LENGTH_LONG).show();
     }
 
     // ---------- Acciones de cada tarjeta ----------
@@ -239,17 +199,36 @@ public class CitasFragment extends Fragment implements CitaAdapter.OnCitaListene
                 .setTitle(R.string.cancelar_cita_titulo)
                 .setMessage(getString(R.string.cancelar_cita_mensaje, cita.getPaciente()))
                 .setNegativeButton(R.string.btn_volver, null)
-                .setPositiveButton(R.string.btn_cancelar_cita, (dialog, which) -> {
-                    // TODO-API: PUT /citas/{id}/cancelar
-                    // Envía: id de la cita. Recibe: la cita con estado CANCELADA.
-                    // Cambiar el estado en la lista solo cuando la API confirme.
+                .setPositiveButton(R.string.btn_cancelar_cita,
+                        (dialog, which) -> cancelarCita(cita))
+                .show();
+    }
+
+    // PUT /api/citas/{id}/cancelar (la cita no se borra, cambia de estado)
+    private void cancelarCita(Cita cita) {
+        ApiClient.getApiService().cancelarCita(cita.getId()).enqueue(new Callback<Cita>() {
+            @Override
+            public void onResponse(@NonNull Call<Cita> call, @NonNull Response<Cita> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (response.isSuccessful()) {
                     cita.setEstado(Cita.ESTADO_CANCELADA);
                     NotificacionHelper.cancelarRecordatorio(requireContext(), cita.getId());
                     adapter.notifyDataSetChanged();
-                    Toast.makeText(requireContext(), R.string.cita_cancelada,
-                            Toast.LENGTH_SHORT).show();
-                })
-                .show();
+                    mostrarMensaje(getString(R.string.cita_cancelada));
+                } else {
+                    mostrarMensaje(ApiErrores.mensaje(requireContext(), response));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Cita> call, @NonNull Throwable t) {
+                if (isAdded()) {
+                    mostrarMensaje(getString(R.string.error_conexion));
+                }
+            }
+        });
     }
 
     @Override
