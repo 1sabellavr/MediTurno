@@ -15,6 +15,7 @@ import androidx.core.content.ContextCompat;
 
 import co.edu.ue.mediturno.R;
 import co.edu.ue.mediturno.util.NotificacionHelper;
+import co.edu.ue.mediturno.util.PreferenciasHelper;
 
 public class RecordatorioReceiver extends BroadcastReceiver {
 
@@ -25,6 +26,11 @@ public class RecordatorioReceiver extends BroadcastReceiver {
     @SuppressLint("MissingPermission")
     @Override
     public void onReceive(Context context, Intent intent) {
+        // SharedPreferences: si se desactivaron los recordatorios, no se muestra el aviso.
+        if (!PreferenciasHelper.obtenerNotificacionesActivas(context)) {
+            return;
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
                 && ContextCompat.checkSelfPermission(context,
                 Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {

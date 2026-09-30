@@ -44,6 +44,11 @@ public final class NotificacionHelper {
     }
 
     public static boolean programarRecordatorio(Context context, Cita cita) {
+        // SharedPreferences: si el usuario desactivó los recordatorios, no se programa nada.
+        if (!PreferenciasHelper.obtenerNotificacionesActivas(context)) {
+            return false;
+        }
+
         Long momentoCita = momentoDeLaCita(cita);
         if (momentoCita == null) {
             return false;

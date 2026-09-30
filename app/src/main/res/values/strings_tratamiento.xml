@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_tratamiento">Tratamiento</string>
+    <string name="tratamiento_vacio">Aún no tienes medicamentos en tu tratamiento</string>
+    <string name="btn_nuevo_tratamiento">Nuevo medicamento</string>
+    <string name="item_dosis">Dosis: %1$s</string>
+    <string name="item_hora_toma">Hora de toma: %1$s</string>
+    <string name="tratamiento_form_titulo_crear">Agregar a mi tratamiento</string>
+    <string name="tratamiento_form_titulo_editar">Editar mi tratamiento</string>
+    <string name="hint_tratamiento_medicamento">Medicamento</string>
+    <string name="hint_dosis">Dosis (por ejemplo, 1 tableta)</string>
+    <string name="hint_hora_toma">Hora de toma</string>
+    <string name="hint_notas">Notas (opcional)</string>
+    <string name="hora_toma_picker_titulo">Selecciona la hora de toma</string>
+    <string name="error_tratamiento_medicamento_vacio">Ingresa el nombre del medicamento</string>
+    <string name="error_dosis_vacia">Ingresa la dosis</string>
+    <string name="error_hora_toma_vacia">Selecciona la hora de toma</string>
+    <string name="tratamiento_guardado">Guardado en tu tratamiento</string>
+    <string name="tratamiento_eliminado">Eliminado de tu tratamiento</string>
+    <string name="eliminar_tratamiento_titulo">Eliminar del tratamiento</string>
+    <string name="eliminar_tratamiento_mensaje">¿Seguro que deseas eliminar %1$s de tu tratamiento?</string>
+    <string name="error_bd_local">No se pudo guardar en la base de datos del teléfono</string>
+</resources>
