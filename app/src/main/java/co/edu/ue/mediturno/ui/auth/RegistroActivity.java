@@ -11,6 +11,9 @@ import co.edu.ue.mediturno.R;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 
 public class RegistroActivity extends AppCompatActivity {
 
@@ -28,11 +31,14 @@ public class RegistroActivity extends AppCompatActivity {
     private TextInputEditText etConfirmar;
     private MaterialButton btnRegistrar;
     private TextView tvVolverLogin;
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_registro);
+
+        mAuth = FirebaseAuth.getInstance(); //Inicializar Firebase Auth
 
         inicializarVistas();
         configurarEventos();
@@ -75,12 +81,28 @@ public class RegistroActivity extends AppCompatActivity {
         if (!validarCampos(nombre, documento, telefono, correo, contrasena, confirmar)) {
             return;
         }
+        // Crear usuario en Firebase Auth
+        mAuth.createUserWithEmailAndPassword(correo, contrasena)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null) {
+                            // Asignar el nombre al perfil del usuario en Firebase
+                            UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                                    .setDisplayName(nombre)
+                                    .build();
+                            user.updateProfile(profileUpdates);
+                        }
 
-        // TODO-API: POST /auth/registro
-        // Envía: nombre, documento, teléfono, correo y contraseña.
-        // Recibe: confirmación de usuario creado (el rol lo asigna la API).
-        // Reemplazar este bloque de prueba por la llamada real y mostrar el error de la API
-        // si el correo o el documento ya están registrados.
+                        Toast.makeText(RegistroActivity.this, R.string.registro_exitoso, Toast.LENGTH_SHORT).show();
+                        finish(); // Regresa a LoginActivity
+                    } else {
+                        String mensajeError = task.getException() != null ?
+                                task.getException().getLocalizedMessage() : "Error al registrar usuario";
+                        Toast.makeText(RegistroActivity.this, "Error: " + mensajeError, Toast.LENGTH_LONG).show();
+                    }
+                });
+
         Toast.makeText(this, R.string.registro_exitoso, Toast.LENGTH_LONG).show();
         finish();
     }
