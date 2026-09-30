@@ -1,6 +1,7 @@
 import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -56,4 +57,8 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.ext.junit)
+    // Importa la BoM de Firebase (gestiona las versiones)
+    implementation(platform(libs.firebase.bom))
+    // Agrega Analytics o las librerías de Firebase que necesites
+    implementation(libs.firebase.auth)
 }
