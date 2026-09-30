@@ -12,9 +12,10 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 public class ApiClient {
 
-    // IP predeterminada del emulador de Android Studio para acceder al localhost del computador
-    // Si pruebo en celu conectado por USB, cambiar "10.0.2.2" por la IP local del PC
-    private static final String BASE_URL = "http://10.0.2.2:8080/";
+    // Dirección de la API. Cambiar según dónde se pruebe:
+    // - Emulador de Android Studio: "http://10.0.2.2:8080/"
+    // - Teléfono real (misma red Wi-Fi): "http://IP_DEL_PC:8080/"  (la IP sale de ipconfig)
+    private static final String BASE_URL = "http://10.57.30.113:8080/";
 
     private static Retrofit retrofit = null;
 
