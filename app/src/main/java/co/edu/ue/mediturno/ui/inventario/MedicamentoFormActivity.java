@@ -5,9 +5,13 @@ import android.os.Bundle;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import co.edu.ue.mediturno.R;
+import co.edu.ue.mediturno.api.ApiClient;
+import co.edu.ue.mediturno.api.ApiErrores;
+import co.edu.ue.mediturno.model.Medicamento;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.textfield.TextInputEditText;
@@ -18,6 +22,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MedicamentoFormActivity extends AppCompatActivity {
 
@@ -69,6 +77,8 @@ public class MedicamentoFormActivity extends AppCompatActivity {
         btnGuardar = findViewById(R.id.btnGuardar);
     }
 
+    // Si llega un id distinto de 0 en el Intent, el formulario está en modo edición:
+    // se rellenan los campos y luego se usará PUT en lugar de POST.
     private void cargarDatosSiEsEdicion() {
         Intent intent = getIntent();
         idMedicamento = intent.getIntExtra(EXTRA_ID, 0);
@@ -124,6 +134,13 @@ public class MedicamentoFormActivity extends AppCompatActivity {
         return campo.getText() != null ? campo.getText().toString().trim() : "";
     }
 
+    /**
+     * Guarda el medicamento en la API (Spring Boot + PostgreSQL).
+     * - Modo creación -> POST /api/inventario
+     * - Modo edición  -> PUT  /api/inventario/{id}
+     * Solo se cierra el formulario cuando la API confirma; así la lista del inventario
+     * (que se recarga desde la API) siempre muestra lo que realmente quedó guardado.
+     */
     private void guardar() {
         String nombre = texto(etNombre);
         String descripcion = texto(etDescripcion);
@@ -136,21 +153,56 @@ public class MedicamentoFormActivity extends AppCompatActivity {
 
         int cantidad = Integer.parseInt(cantidadTexto);
 
-        // TODO-API: si modoEdicion es false -> POST /medicamentos (envía nombre, descripción,
-        // cantidad y fecha de vencimiento). Si es true -> PUT /medicamentos/{id}
-        // (envía los mismos campos, incluida la cantidad actualizada).
-        // Reemplazar el resultado de prueba de abajo por la respuesta real de la API
-        // y mostrar el error si el medicamento ya existe.
-        Intent resultado = new Intent();
-        resultado.putExtra(EXTRA_ID, idMedicamento);
-        resultado.putExtra(EXTRA_NOMBRE, nombre);
-        resultado.putExtra(EXTRA_DESCRIPCION, descripcion);
-        resultado.putExtra(EXTRA_CANTIDAD, cantidad);
-        resultado.putExtra(EXTRA_VENCIMIENTO, vencimiento);
-        setResult(RESULT_OK, resultado);
+        // Objeto que Retrofit convertirá a JSON con Gson para enviarlo en el cuerpo (@Body).
+        Medicamento medicamento = new Medicamento(idMedicamento, nombre, descripcion,
+                cantidad, vencimiento);
 
-        Toast.makeText(this, R.string.medicamento_guardado, Toast.LENGTH_SHORT).show();
-        finish();
+        // Se desactiva el botón para evitar enviar el mismo medicamento dos veces.
+        btnGuardar.setEnabled(false);
+
+        // Se elige la llamada según el modo: editar (PUT) o crear (POST).
+        Call<Medicamento> llamada = modoEdicion
+                ? ApiClient.getApiService().actualizarMedicamento(idMedicamento, medicamento)
+                : ApiClient.getApiService().crearMedicamento(medicamento);
+
+        // enqueue = petición asíncrona: no bloquea la pantalla mientras espera al servidor.
+        llamada.enqueue(new Callback<Medicamento>() {
+
+            // La API respondió (puede ser éxito 200/201 o un error 400/404/409...).
+            @Override
+            public void onResponse(@NonNull Call<Medicamento> call,
+                                   @NonNull Response<Medicamento> response) {
+                // Si el usuario ya salió de la pantalla, no se toca la interfaz.
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+
+                if (response.isSuccessful()) {
+                    // RESULT_OK avisa a InventarioFragment para que recargue la lista desde la API.
+                    setResult(RESULT_OK);
+                    Toast.makeText(MedicamentoFormActivity.this,
+                            R.string.medicamento_guardado, Toast.LENGTH_SHORT).show();
+                    finish();
+                } else {
+                    // Error controlado de la API: se reactiva el botón y se muestra su mensaje.
+                    btnGuardar.setEnabled(true);
+                    Toast.makeText(MedicamentoFormActivity.this,
+                            ApiErrores.mensaje(MedicamentoFormActivity.this, response),
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+
+            // No se pudo llegar al servidor (IP incorrecta, API apagada, sin red...).
+            @Override
+            public void onFailure(@NonNull Call<Medicamento> call, @NonNull Throwable t) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                btnGuardar.setEnabled(true);
+                Toast.makeText(MedicamentoFormActivity.this,
+                        R.string.error_conexion, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private boolean validarCampos(String nombre, String cantidadTexto, String vencimiento) {

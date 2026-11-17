@@ -14,7 +14,8 @@ public final class ApiErrores {
 
     public static String mensaje(Context context, Response<?> response) {
         try {
-            if (response.errorBody() != null) {
+            if (response.
+                    errorBody() != null) {
                 String texto = response.errorBody().string().trim();
                 // La API responde con texto plano en los errores controlados (400, 409).
                 if (!texto.isEmpty() && texto.length() < 200 && !texto.startsWith("{")) {
